@@ -25,6 +25,8 @@ const statusTone: Record<ReturnType<typeof getStatusDisplay>["tone"], string> =
       "border-[var(--color-border)] bg-[var(--color-muted-soft)] text-[var(--color-muted)]",
   };
 
+const quickStatuses: UserAssetStatus[] = ["interested", "planned", "applied"];
+
 export function AssetCard({
   asset,
   canTrack,
@@ -41,9 +43,10 @@ export function AssetCard({
   userState?: UserAssetState;
 }) {
   const status = getStatusDisplay(asset.application, now);
+  const currentStatus = userState?.status ?? "not_started";
 
   return (
-    <article className="group flex min-h-[350px] flex-col rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[0_18px_50px_-42px_rgb(0_0_0/0.55)] transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-[var(--color-text)]/25 hover:shadow-[0_24px_60px_-44px_rgb(0_0_0/0.7)]">
+    <article className="group flex min-h-[360px] flex-col rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm transition-[border-color,box-shadow] hover:border-[var(--color-text)]/25 hover:shadow-md">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate text-xs font-medium text-[var(--color-muted)]">
@@ -60,12 +63,12 @@ export function AssetCard({
         </span>
       </div>
 
-      <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
+      <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-[var(--color-muted)]">
         {asset.summary}
       </p>
 
       {asset.value && (
-        <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2.5 text-sm font-medium leading-relaxed text-[var(--color-text)]">
+        <div className="mt-4 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2.5 text-sm font-medium leading-relaxed text-[var(--color-text)]">
           {asset.value}
         </div>
       )}
@@ -110,40 +113,64 @@ export function AssetCard({
             href={asset.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="shrink-0 text-xs font-medium text-[var(--color-text)] opacity-60 transition-opacity group-hover:opacity-100"
+            className="shrink-0 rounded-full border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-2)]"
           >
             開く →
           </a>
         </div>
 
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[11px] font-medium text-[var(--color-muted)]">
-            自分の状態
-          </span>
-          {canTrack ? (
-            <select
-              value={userState?.status ?? "not_started"}
-              disabled={saving}
-              onChange={(event) =>
-                onUserStatusChange(
-                  asset.id,
-                  event.target.value as UserAssetStatus,
-                )
-              }
-              className="h-8 max-w-36 rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-text)] disabled:opacity-50"
-            >
-              {Object.entries(USER_ASSET_STATUS_LABELS).map(
-                ([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ),
-              )}
-            </select>
-          ) : (
-            <span className="rounded-full bg-[var(--color-muted-soft)] px-2.5 py-1 text-[11px] text-[var(--color-muted)]">
-              ログインで管理
+        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-2">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px] font-medium text-[var(--color-muted)]">
+              自分の状態
             </span>
+            {canTrack && (
+              <select
+                value={currentStatus}
+                disabled={saving}
+                onChange={(event) =>
+                  onUserStatusChange(
+                    asset.id,
+                    event.target.value as UserAssetStatus,
+                  )
+                }
+                className="h-8 max-w-32 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-text)] disabled:opacity-50"
+              >
+                {Object.entries(USER_ASSET_STATUS_LABELS).map(
+                  ([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ),
+                )}
+              </select>
+            )}
+          </div>
+          {canTrack ? (
+            <div className="mt-2 grid grid-cols-3 gap-1">
+              {quickStatuses.map((statusValue) => (
+                <button
+                  key={statusValue}
+                  type="button"
+                  disabled={saving}
+                  onClick={() => onUserStatusChange(asset.id, statusValue)}
+                  className={`h-8 rounded text-[11px] font-medium transition-colors disabled:opacity-50 ${
+                    currentStatus === statusValue
+                      ? "bg-[var(--color-text)] text-[var(--color-bg)]"
+                      : "bg-[var(--color-surface-2)] text-[var(--color-muted)] hover:text-[var(--color-text)]"
+                  }`}
+                >
+                  {USER_ASSET_STATUS_LABELS[statusValue]}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <a
+              href="/signin"
+              className="mt-2 flex h-8 items-center justify-center rounded bg-[var(--color-surface-2)] text-[11px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+            >
+              ログインして進捗を保存
+            </a>
           )}
         </div>
       </div>

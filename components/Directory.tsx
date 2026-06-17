@@ -35,6 +35,8 @@ type FilterState = {
   statuses: ApplicationStatus[];
 };
 
+type ViewMode = "all" | "saved" | "untracked";
+
 type ChipOption<T extends string> = {
   label: string;
   value: T;
@@ -81,6 +83,32 @@ function getFilteredAssets(assets: Asset[], filters: FilterState): Asset[] {
     .filter((asset) => matchesEquities(asset, filters.equities))
     .filter((asset) => matchesStatuses(asset, filters.statuses))
     .toSorted(compareByDeadline);
+}
+
+function getVisibleAssets({
+  assets,
+  filters,
+  stateByAssetId,
+  viewMode,
+}: {
+  assets: Asset[];
+  filters: FilterState;
+  stateByAssetId: Record<string, UserAssetState>;
+  viewMode: ViewMode;
+}): Asset[] {
+  return getFilteredAssets(assets, filters).filter((asset) =>
+    matchesViewMode(asset, stateByAssetId, viewMode),
+  );
+}
+
+function matchesViewMode(
+  asset: Asset,
+  stateByAssetId: Record<string, UserAssetState>,
+  viewMode: ViewMode,
+): boolean {
+  if (viewMode === "all") return true;
+  const tracked = Boolean(stateByAssetId[asset.id]);
+  return viewMode === "saved" ? tracked : !tracked;
 }
 
 function matchesQuery(asset: Asset, query: string): boolean {
@@ -184,18 +212,28 @@ function ChipList<T extends string>({
 
 function FilterPanel({
   assetCount,
+  canTrack,
   filters,
   resultCount,
+  savedCount,
+  untrackedCount,
+  viewMode,
   onQueryChange,
+  onViewModeChange,
   onToggleAssetType,
   onToggleStage,
   onToggleEquity,
   onToggleStatus,
 }: {
   assetCount: number;
+  canTrack: boolean;
   filters: FilterState;
   resultCount: number;
+  savedCount: number;
+  untrackedCount: number;
+  viewMode: ViewMode;
   onQueryChange: (query: string) => void;
+  onViewModeChange: (mode: ViewMode) => void;
   onToggleAssetType: (value: AssetType) => void;
   onToggleStage: (value: Stage) => void;
   onToggleEquity: (value: Equity) => void;
@@ -208,6 +246,13 @@ function FilterPanel({
         query={filters.query}
         resultCount={resultCount}
         onQueryChange={onQueryChange}
+      />
+      <ViewTabs
+        canTrack={canTrack}
+        savedCount={savedCount}
+        untrackedCount={untrackedCount}
+        value={viewMode}
+        onChange={onViewModeChange}
       />
       <div className="mt-4 grid gap-5 border-t border-[var(--color-border)] pt-4 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
         <ChipList
@@ -239,6 +284,45 @@ function FilterPanel({
   );
 }
 
+function ViewTabs({
+  canTrack,
+  savedCount,
+  untrackedCount,
+  value,
+  onChange,
+}: {
+  canTrack: boolean;
+  savedCount: number;
+  untrackedCount: number;
+  value: ViewMode;
+  onChange: (mode: ViewMode) => void;
+}) {
+  const tabs = [
+    { label: "すべて", value: "all" as const },
+    { label: `保存済み ${savedCount}`, value: "saved" as const },
+    { label: `未整理 ${untrackedCount}`, value: "untracked" as const },
+  ];
+  return (
+    <div className="mt-3 flex flex-wrap gap-1 rounded-md bg-[var(--color-surface-2)] p-1">
+      {tabs.map((tab) => (
+        <button
+          key={tab.value}
+          type="button"
+          disabled={!canTrack && tab.value !== "all"}
+          onClick={() => onChange(tab.value)}
+          className={`h-8 rounded px-3 text-xs font-medium transition-colors ${
+            value === tab.value
+              ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm"
+              : "text-[var(--color-muted)] hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-45"
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function SearchRow({
   assetCount,
   query,
@@ -257,7 +341,7 @@ function SearchRow({
         <input
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
-          placeholder="キーワードで検索（例: 無料オフィス、AWS、未踏、海外、ディープテック）"
+          placeholder="キーワードで検索"
           className="h-12 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-4 text-sm text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-text)]"
         />
       </label>
@@ -273,17 +357,24 @@ function SearchRow({
 
 function ResultSummary({
   activeCount,
+  canTrack,
   onClear,
 }: {
   activeCount: number;
+  canTrack: boolean;
   onClear: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-[var(--color-muted)]">
-        締切が近い順（募集中→募集予定→通年→定期→終了）に整理。日付は
-        {LAST_CHECKED}時点の目安です。最新は各公式サイトをご確認ください。
-      </p>
+    <div className="flex flex-col gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <p className="text-sm text-[var(--color-text)]">
+          締切が近い順に整理しています
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-[var(--color-muted)]">
+          日付は{LAST_CHECKED}時点の目安です。最新は各公式サイトをご確認ください。
+          {!canTrack && " ログインすると各アセットの進捗を保存できます。"}
+        </p>
+      </div>
       {activeCount > 0 && (
         <button
           type="button"
@@ -356,13 +447,16 @@ export function Directory({
   const [stateByAssetId, setStateByAssetId] = useState<
     Record<string, UserAssetState>
   >(() => statesToRecord(initialStates));
+  const [viewMode, setViewMode] = useState<ViewMode>("all");
   const [savingAssetId, setSavingAssetId] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
   const filtered = useMemo(
-    () => getFilteredAssets(assets, filters),
-    [assets, filters],
+    () => getVisibleAssets({ assets, filters, stateByAssetId, viewMode }),
+    [assets, filters, stateByAssetId, viewMode],
   );
   const activeCount = getActiveCount(filters);
+  const savedCount = Object.keys(stateByAssetId).length;
+  const untrackedCount = Math.max(assets.length - savedCount, 0);
   const [now, setNow] = useState<Date | undefined>(undefined);
 
   useEffect(() => setNow(new Date()), []);
@@ -370,14 +464,22 @@ export function Directory({
     () => setStateByAssetId(statesToRecord(initialStates)),
     [initialStates, user?.id],
   );
+  useEffect(() => {
+    if (!user) setViewMode("all");
+  }, [user]);
 
   return (
     <div className="space-y-6">
       <FilterPanel
         assetCount={assets.length}
+        canTrack={Boolean(user)}
         filters={filters}
         resultCount={filtered.length}
+        savedCount={savedCount}
+        untrackedCount={untrackedCount}
+        viewMode={viewMode}
         onQueryChange={(query) => setFilters((state) => ({ ...state, query }))}
+        onViewModeChange={setViewMode}
         onToggleAssetType={(value) =>
           setFilters((state) => ({
             ...state,
@@ -405,6 +507,7 @@ export function Directory({
       />
       <ResultSummary
         activeCount={activeCount}
+        canTrack={Boolean(user)}
         onClear={() =>
           setFilters({
             query: "",
