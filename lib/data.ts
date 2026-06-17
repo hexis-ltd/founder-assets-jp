@@ -186,7 +186,10 @@ export const assets: Asset[] = [
     assetTypes: ["community", "mentoring", "overseas"],
     stages: ["idea", "seed", "early"],
     equity: "none",
-    application: { status: "rolling", note: "通年（イベント・プログラムは随時）" },
+    application: {
+      status: "rolling",
+      note: "通年（イベント・プログラムは随時）",
+    },
     value: "無料の交流拠点・ピッチ・海外連携",
     eligibility: "起業家・イノベーター（誰でも）",
     summary:
@@ -554,7 +557,10 @@ export const assets: Asset[] = [
     assetTypes: ["equity-investment", "community", "free-office"],
     stages: ["seed", "early"],
     equity: "required",
-    application: { status: "rolling", note: "随時、投資・インキュベーションを検討" },
+    application: {
+      status: "rolling",
+      note: "随時、投資・インキュベーションを検討",
+    },
     value: "AI特化の出資＋コミュニティKERNEL＋GPU環境",
     eligibility: "AI領域のスタートアップ・研究者",
     summary:
@@ -935,7 +941,10 @@ export const assets: Asset[] = [
     assetTypes: ["grant-subsidy", "community"],
     stages: ["any"],
     equity: "none",
-    application: { status: "rolling", note: "情報資料（随時更新・カオスマップ）" },
+    application: {
+      status: "rolling",
+      note: "情報資料（随時更新・カオスマップ）",
+    },
     value: "補助金・融資・税制など官系施策を一覧化",
     eligibility: "すべての起業家・スタートアップ",
     summary:

@@ -3,7 +3,7 @@ import "./globals.css";
 
 const siteName = "Founder Assets JP — 起業家アセット図鑑";
 const description =
-  "日本のスタートアップ・起業家が使える支援アセット（無料オフィス・クラウドクレジット・アクセラレーター・補助金・人材育成・海外展開）を、提供アセット種別 / 対象フェーズ / エクイティ有無 / 申込時期の4軸で横断検索できるデータベース。";
+  "日本のスタートアップ・起業家が使える支援アセットを、提供アセット種別 / 対象フェーズ / エクイティ有無 / 募集ステータスで横断検索し、ユーザーごとに申請状態を管理できるデータベース。";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   ? process.env.NEXT_PUBLIC_SITE_URL
