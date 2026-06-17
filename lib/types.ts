@@ -5,39 +5,48 @@
 // ============================================================
 
 // 提供アセット種別
-export type AssetType =
-  | "free-office" // 無料/格安オフィス・スペース
-  | "cloud-credit" // クラウド・SaaSクレジット
-  | "funding" // 融資・資金供給
-  | "equity-investment" // エクイティ出資
-  | "grant-subsidy" // 補助金・助成金（非返済）
-  | "mentoring" // メンタリング・伴走支援
-  | "talent-program" // 人材発掘・育成
-  | "community" // コミュニティ・ネットワーク
-  | "overseas" // 海外展開支援
-  | "accelerator"; // アクセラレーター（複合）
+// ※ 値の配列を単一ソースとし、型もここから導出する（zod検証と共有するため）。
+export const ASSET_TYPE_VALUES = [
+  "free-office", // 無料/格安オフィス・スペース
+  "cloud-credit", // クラウド・SaaSクレジット
+  "funding", // 融資・資金供給
+  "equity-investment", // エクイティ出資
+  "grant-subsidy", // 補助金・助成金（非返済）
+  "mentoring", // メンタリング・伴走支援
+  "talent-program", // 人材発掘・育成
+  "community", // コミュニティ・ネットワーク
+  "overseas", // 海外展開支援
+  "accelerator", // アクセラレーター（複合）
+] as const;
+export type AssetType = (typeof ASSET_TYPE_VALUES)[number];
 
 // 対象フェーズ
-export type Stage =
-  | "idea" // 創業前・アイデア
-  | "seed" // シード
-  | "early" // アーリー
-  | "growth" // グロース
-  | "any"; // フェーズ不問
+export const STAGE_VALUES = [
+  "idea", // 創業前・アイデア
+  "seed", // シード
+  "early", // アーリー
+  "growth", // グロース
+  "any", // フェーズ不問
+] as const;
+export type Stage = (typeof STAGE_VALUES)[number];
 
 // エクイティ有無
-export type Equity =
-  | "none" // 株式取得なし（非エクイティ）
-  | "optional" // 任意・場合により
-  | "required"; // 出資（株式取得あり）
+export const EQUITY_VALUES = [
+  "none", // 株式取得なし（非エクイティ）
+  "optional", // 任意・場合により
+  "required", // 出資（株式取得あり）
+] as const;
+export type Equity = (typeof EQUITY_VALUES)[number];
 
 // 募集ステータス（締切の性質を型で表現する）
-export type ApplicationStatus =
-  | "open" // 現在募集中（締切日あり）
-  | "upcoming" // 募集予定（開始日が判明）
-  | "rolling" // 通年・常時応募可（締切なし）
-  | "recurring" // 定期募集（年次/期別。次回の具体日は未確定）
-  | "closed"; // 現在募集なし（次回未定・選定制など）
+export const APPLICATION_STATUS_VALUES = [
+  "open", // 現在募集中（締切日あり）
+  "upcoming", // 募集予定（開始日が判明）
+  "rolling", // 通年・常時応募可（締切なし）
+  "recurring", // 定期募集（年次/期別。次回の具体日は未確定）
+  "closed", // 現在募集なし（次回未定・選定制など）
+] as const;
+export type ApplicationStatus = (typeof APPLICATION_STATUS_VALUES)[number];
 
 // 応募情報（必須）。status は必ず持ち、状況に応じて日付/周期を補う。
 export interface Application {
