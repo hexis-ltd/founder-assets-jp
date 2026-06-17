@@ -14,14 +14,14 @@
 
 :root {
   color-scheme: light;
-  --background: oklch(0.985 0 0);
-  --foreground: oklch(0.18 0 0);
+  --background: oklch(0.982 0 0);
+  --foreground: oklch(0.16 0 0);
   --card: oklch(1 0 0);
-  --secondary: oklch(0.955 0 0);
-  --muted: oklch(0.94 0 0);
-  --muted-foreground: oklch(0.47 0 0);
-  --primary: oklch(0.23 0 0);
-  --border: oklch(0.88 0 0);
+  --secondary: oklch(0.958 0 0);
+  --muted: oklch(0.932 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --primary: oklch(0.2 0 0);
+  --border: oklch(0.885 0 0);
 }
 
 html,
@@ -33,18 +33,9 @@ body {
 }
 
 body {
-  background-image:
-    linear-gradient(to bottom, oklch(1 0 0), var(--background) 340px),
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
-  background-position:
-    0 0,
-    0 0,
-    0 0;
-  background-size:
-    auto,
-    44px 44px,
-    44px 44px;
+  background:
+    linear-gradient(to bottom, oklch(1 0 0), transparent 320px),
+    var(--background);
   font-family:
     "Hiragino Kaku Gothic ProN",
     "Hiragino Sans",

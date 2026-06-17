@@ -63,7 +63,7 @@ export function AuthForm({
       onSubmit={(event) =>
         handleSubmit(event, config.apiPath, setState, router)
       }
-      className="mx-auto flex w-full max-w-md flex-col gap-5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[0_28px_80px_-64px_rgb(0_0_0/0.7)]"
+      className="mx-auto flex w-full max-w-md flex-col gap-5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm"
     >
       <div>
         <Link
@@ -82,9 +82,9 @@ export function AuthForm({
 
       <a
         href="/api/auth/google/start"
-        className="flex h-11 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-5 text-sm font-medium text-[var(--color-text)] transition-colors hover:border-[var(--color-text)]"
+        className="flex h-11 items-center justify-center rounded-full bg-[var(--color-text)] px-5 text-sm font-medium text-[var(--color-bg)] transition-opacity hover:opacity-90"
       >
-        Googleで続行
+        Googleでサインインして進捗を保存
       </a>
 
       <div className="flex items-center gap-3 text-xs text-[var(--color-muted)]">
