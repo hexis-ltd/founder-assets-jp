@@ -31,14 +31,12 @@ export default async function Home() {
               href={REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-9 items-center rounded-full bg-[var(--color-text)] px-4 text-sm font-medium text-[var(--color-bg)] transition-opacity hover:opacity-90"
+              className="hidden h-9 items-center rounded-full px-3 text-sm text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] sm:inline-flex"
             >
-              GitHub で貢献
+              GitHub
             </a>
+            <AuthPanel user={user} />
           </nav>
-        </div>
-        <div className="mx-auto flex max-w-7xl justify-end px-4 pb-4 sm:px-6">
-          <AuthPanel user={user} />
         </div>
       </header>
 
