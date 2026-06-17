@@ -3,79 +3,107 @@ import { assets } from "@/lib/data";
 
 const REPO_URL = "https://github.com/hexis-ltd/founder-assets-jp";
 
-export default function Home() {
-  const count = assets.length;
-  return (
-    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-      {/* ヘッダー */}
-      <header className="flex flex-col gap-6">
-        <div className="flex items-center justify-between gap-4">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs text-[var(--color-muted)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]" />
-            Founder Assets JP
-          </span>
-          <a
-            href={REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-text)]"
-          >
-            GitHub で貢献する ↗
-          </a>
-        </div>
+const nonEquityCount = assets.filter((asset) => asset.equity === "none").length;
+const rollingCount = assets.filter(
+  (asset) => asset.application.status === "rolling",
+).length;
+const cloudCount = assets.filter((asset) =>
+  asset.assetTypes.includes("cloud-credit"),
+).length;
 
-        <div className="flex flex-col gap-4">
-          <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-            起業家アセット図鑑
-          </h1>
-          <p className="max-w-2xl text-sm leading-relaxed text-[var(--color-muted)] sm:text-base">
-            日本のスタートアップ・起業家が使える支援アセットを 1
-            か所に集約。無料オフィス・クラウドクレジット・アクセラレーター・補助金・人材育成・海外展開までを、
-            <span className="text-[var(--color-text)]">
-              提供アセット種別 / 対象フェーズ / エクイティ有無 / 申込時期
-            </span>
-            の4軸で横断検索できます。現在
-            <span className="text-[var(--color-text)]"> {count} 件</span>
-            を掲載。
-          </p>
+const stats = [
+  { label: "掲載アセット", value: `${assets.length}` },
+  { label: "非エクイティ", value: `${nonEquityCount}` },
+  { label: "通年・随時", value: `${rollingCount}` },
+  { label: "クラウド特典", value: `${cloudCount}` },
+];
+
+export default function Home() {
+  return (
+    <main className="min-h-dvh">
+      <header className="border-b border-[var(--color-border)] bg-[var(--color-bg)]/82 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <a href="/" className="text-sm font-semibold tracking-tight">
+            Founder Assets JP
+          </a>
+          <nav className="flex items-center gap-2">
+            <a
+              href="https://hexis.ltd"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden h-9 items-center rounded-full px-3 text-sm text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] sm:inline-flex"
+            >
+              Hexis
+            </a>
+            <a
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-9 items-center rounded-full bg-[var(--color-text)] px-4 text-sm font-medium text-[var(--color-bg)] transition-opacity hover:opacity-90"
+            >
+              GitHub で貢献
+            </a>
+          </nav>
         </div>
       </header>
 
-      {/* 本体 */}
-      <section className="mt-10">
+      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.55fr)] lg:items-end">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase text-[var(--color-muted)]">
+            startup support asset directory
+          </p>
+          <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-tight text-[var(--color-text)] sm:text-5xl lg:text-6xl">
+            起業家が使える支援を、応募しやすい順に。
+          </h1>
+          <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
+            無料オフィス、クラウドクレジット、補助金、アクセラレーター、人材育成、海外展開まで。
+            日本のスタートアップ向けアセットを、提供内容・フェーズ・エクイティ・募集ステータスで横断検索できます。
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-2 shadow-[0_28px_80px_-64px_rgb(0_0_0/0.7)]">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-md bg-[var(--color-surface-2)] px-4 py-3"
+            >
+              <div className="text-2xl font-semibold text-[var(--color-text)]">
+                {stat.value}
+              </div>
+              <div className="mt-1 text-xs text-[var(--color-muted)]">
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
         <Directory />
       </section>
 
-      {/* フッター */}
-      <footer className="mt-16 flex flex-col gap-3 border-t border-[var(--color-border)] pt-8 text-xs leading-relaxed text-[var(--color-muted)]">
-        <p>
-          掲載情報は各公式サイトの公開情報を基にしたキュレーションです。金額・募集時期・応募条件などは変動するため、
-          <span className="text-[var(--color-text)]">
-            最終的な内容は必ず各プログラムの公式サイトでご確認ください
-          </span>
-          。誤りの指摘やプログラムの追加は{" "}
-          <a
-            href={REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline decoration-dotted underline-offset-2 hover:text-[var(--color-text)]"
-          >
-            GitHub の Pull Request
-          </a>{" "}
-          で歓迎します。
-        </p>
-        <p>
-          Built by{" "}
-          <a
-            href="https://hexis.ltd"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline decoration-dotted underline-offset-2 hover:text-[var(--color-text)]"
-          >
-            Hexis
-          </a>
-          . オープンソース（MIT License）。
-        </p>
+      <footer className="border-t border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-8 text-xs leading-relaxed text-[var(--color-muted)] sm:px-6">
+          <p>
+            掲載情報は各公式サイトの公開情報を基にしたキュレーションです。金額・募集時期・応募条件などは変動するため、
+            <span className="text-[var(--color-text)]">
+              最終的な内容は必ず各プログラムの公式サイトでご確認ください
+            </span>
+            。
+          </p>
+          <p>
+            誤りの指摘やプログラムの追加は{" "}
+            <a
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-[var(--color-text)] underline decoration-dotted underline-offset-4"
+            >
+              GitHub の Pull Request
+            </a>{" "}
+            で歓迎します。Built by Hexis. MIT License.
+          </p>
+        </div>
       </footer>
     </main>
   );
