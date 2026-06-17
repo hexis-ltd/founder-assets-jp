@@ -168,7 +168,7 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-8 shrink-0 items-center rounded-full border px-3 text-xs font-medium transition-colors ${
+      className={`inline-flex h-8 shrink-0 items-center rounded-md border px-2.5 text-xs font-medium transition-colors ${
         active
           ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
           : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-text)]/25 hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]"
@@ -211,28 +211,24 @@ function ChipList<T extends string>({
 }
 
 function FilterPanel({
-  assetCount,
   canTrack,
+  embedded = false,
   filters,
-  resultCount,
   savedCount,
   untrackedCount,
   viewMode,
-  onQueryChange,
   onViewModeChange,
   onToggleAssetType,
   onToggleStage,
   onToggleEquity,
   onToggleStatus,
 }: {
-  assetCount: number;
   canTrack: boolean;
+  embedded?: boolean;
   filters: FilterState;
-  resultCount: number;
   savedCount: number;
   untrackedCount: number;
   viewMode: ViewMode;
-  onQueryChange: (query: string) => void;
   onViewModeChange: (mode: ViewMode) => void;
   onToggleAssetType: (value: AssetType) => void;
   onToggleStage: (value: Stage) => void;
@@ -240,13 +236,23 @@ function FilterPanel({
   onToggleStatus: (value: ApplicationStatus) => void;
 }) {
   return (
-    <section className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-[0_28px_80px_-64px_rgb(0_0_0/0.7)]">
-      <SearchRow
-        assetCount={assetCount}
-        query={filters.query}
-        resultCount={resultCount}
-        onQueryChange={onQueryChange}
-      />
+    <aside
+      className={
+        embedded
+          ? "p-0"
+          : "rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+      }
+    >
+      {!embedded && (
+        <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-medium text-[var(--color-text)]">
+          Filters
+        </h2>
+        <span className="text-xs text-[var(--color-muted)]">
+          {getActiveCount(filters)} active
+        </span>
+      </div>
+      )}
       <ViewTabs
         canTrack={canTrack}
         savedCount={savedCount}
@@ -254,7 +260,7 @@ function FilterPanel({
         value={viewMode}
         onChange={onViewModeChange}
       />
-      <div className="mt-4 grid gap-5 border-t border-[var(--color-border)] pt-4 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
+      <div className="mt-5 grid gap-5 border-t border-[var(--color-border)] pt-5">
         <ChipList
           label="提供アセット"
           options={assetTypeOptions}
@@ -280,7 +286,7 @@ function FilterPanel({
           onToggle={onToggleStatus}
         />
       </div>
-    </section>
+    </aside>
   );
 }
 
@@ -303,7 +309,7 @@ function ViewTabs({
     { label: `未整理 ${untrackedCount}`, value: "untracked" as const },
   ];
   return (
-    <div className="mt-3 flex flex-wrap gap-1 rounded-md bg-[var(--color-surface-2)] p-1">
+    <div className="grid gap-1 rounded-md bg-[var(--color-surface-2)] p-1">
       {tabs.map((tab) => (
         <button
           key={tab.value}
@@ -335,21 +341,23 @@ function SearchRow({
   onQueryChange: (query: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 lg:flex-row">
+    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
       <label className="min-w-0 flex-1">
         <span className="sr-only">キーワード検索</span>
         <input
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
           placeholder="キーワードで検索"
-          className="h-12 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-4 text-sm text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-text)]"
+          className="h-10 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-text)]"
         />
       </label>
-      <div className="flex items-center justify-between gap-3 rounded-md bg-[var(--color-surface-2)] px-4 py-3 text-sm lg:w-56">
+      <div className="flex h-10 items-center justify-between gap-3 rounded-md bg-[var(--color-surface-2)] px-3 text-sm sm:w-48">
         <span className="text-[var(--color-muted)]">表示中</span>
         <span className="font-semibold text-[var(--color-text)]">
           {resultCount} / {assetCount}
         </span>
+      </div>
       </div>
     </div>
   );
@@ -365,12 +373,9 @@ function ResultSummary({
   onClear: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 border-b border-[var(--color-border)] pb-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <p className="text-sm text-[var(--color-text)]">
-          締切が近い順に整理しています
-        </p>
-        <p className="mt-1 text-xs leading-relaxed text-[var(--color-muted)]">
+        <p className="text-xs leading-relaxed text-[var(--color-muted)]">
           日付は{LAST_CHECKED}時点の目安です。最新は各公式サイトをご確認ください。
           {!canTrack && " ログインすると各アセットの進捗を保存できます。"}
         </p>
@@ -379,7 +384,7 @@ function ResultSummary({
         <button
           type="button"
           onClick={onClear}
-          className="inline-flex h-9 w-fit items-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-xs font-medium text-[var(--color-muted)] transition-colors hover:border-[var(--color-text)]/25 hover:text-[var(--color-text)]"
+          className="inline-flex h-8 w-fit items-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-medium text-[var(--color-muted)] transition-colors hover:border-[var(--color-text)]/25 hover:text-[var(--color-text)]"
         >
           条件をクリア（{activeCount}）
         </button>
@@ -412,7 +417,7 @@ function AssetGrid({
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3">
       {filtered.map((asset) => (
         <AssetCard
           key={asset.id}
@@ -469,76 +474,130 @@ export function Directory({
   }, [user]);
 
   return (
-    <div className="space-y-6">
-      <FilterPanel
-        assetCount={assets.length}
-        canTrack={Boolean(user)}
-        filters={filters}
-        resultCount={filtered.length}
-        savedCount={savedCount}
-        untrackedCount={untrackedCount}
-        viewMode={viewMode}
-        onQueryChange={(query) => setFilters((state) => ({ ...state, query }))}
-        onViewModeChange={setViewMode}
-        onToggleAssetType={(value) =>
-          setFilters((state) => ({
-            ...state,
-            assetTypes: toggleValue(state.assetTypes, value),
-          }))
-        }
-        onToggleStage={(value) =>
-          setFilters((state) => ({
-            ...state,
-            stages: toggleValue(state.stages, value),
-          }))
-        }
-        onToggleEquity={(value) =>
-          setFilters((state) => ({
-            ...state,
-            equities: toggleValue(state.equities, value),
-          }))
-        }
-        onToggleStatus={(value) =>
-          setFilters((state) => ({
-            ...state,
-            statuses: toggleValue(state.statuses, value),
-          }))
-        }
-      />
-      <ResultSummary
-        activeCount={activeCount}
-        canTrack={Boolean(user)}
-        onClear={() =>
-          setFilters({
-            query: "",
-            assetTypes: [],
-            stages: [],
-            equities: [],
-            statuses: [],
-          })
-        }
-      />
-      {error && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {error}
+    <div className="grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+      <section className="min-w-0 space-y-5 lg:order-2">
+        <SearchRow
+          assetCount={assets.length}
+          query={filters.query}
+          resultCount={filtered.length}
+          onQueryChange={(query) =>
+            setFilters((state) => ({ ...state, query }))
+          }
+        />
+        <div className="lg:hidden">
+          <details className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium text-[var(--color-text)]">
+              Filters
+              <span className="text-xs font-normal text-[var(--color-muted)]">
+                {activeCount} active
+              </span>
+            </summary>
+            <div className="border-t border-[var(--color-border)] p-4">
+              <FilterPanel
+                canTrack={Boolean(user)}
+                embedded
+                filters={filters}
+                savedCount={savedCount}
+                untrackedCount={untrackedCount}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                onToggleAssetType={(value) =>
+                  setFilters((state) => ({
+                    ...state,
+                    assetTypes: toggleValue(state.assetTypes, value),
+                  }))
+                }
+                onToggleStage={(value) =>
+                  setFilters((state) => ({
+                    ...state,
+                    stages: toggleValue(state.stages, value),
+                  }))
+                }
+                onToggleEquity={(value) =>
+                  setFilters((state) => ({
+                    ...state,
+                    equities: toggleValue(state.equities, value),
+                  }))
+                }
+                onToggleStatus={(value) =>
+                  setFilters((state) => ({
+                    ...state,
+                    statuses: toggleValue(state.statuses, value),
+                  }))
+                }
+              />
+            </div>
+          </details>
         </div>
-      )}
-      <AssetGrid
-        canTrack={Boolean(user)}
-        filtered={filtered}
-        now={now}
-        onUserStatusChange={(assetId, status) =>
-          saveUserStatus({
-            assetId,
-            setError,
-            setSavingAssetId,
-            setStateByAssetId,
-            status,
-          })
-        }
-        savingAssetId={savingAssetId}
-        stateByAssetId={stateByAssetId}
-      />
+        <ResultSummary
+          activeCount={activeCount}
+          canTrack={Boolean(user)}
+          onClear={() =>
+            setFilters({
+              query: "",
+              assetTypes: [],
+              stages: [],
+              equities: [],
+              statuses: [],
+            })
+          }
+        />
+        {error && (
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {error}
+          </div>
+        )}
+        <AssetGrid
+          canTrack={Boolean(user)}
+          filtered={filtered}
+          now={now}
+          onUserStatusChange={(assetId, status) =>
+            saveUserStatus({
+              assetId,
+              setError,
+              setSavingAssetId,
+              setStateByAssetId,
+              status,
+            })
+          }
+          savingAssetId={savingAssetId}
+          stateByAssetId={stateByAssetId}
+        />
+      </section>
+      <div className="hidden lg:order-1 lg:block lg:sticky lg:top-6 lg:self-start">
+        <FilterPanel
+          canTrack={Boolean(user)}
+          filters={filters}
+          savedCount={savedCount}
+          untrackedCount={untrackedCount}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onToggleAssetType={(value) =>
+            setFilters((state) => ({
+              ...state,
+              assetTypes: toggleValue(state.assetTypes, value),
+            }))
+          }
+          onToggleStage={(value) =>
+            setFilters((state) => ({
+              ...state,
+              stages: toggleValue(state.stages, value),
+            }))
+          }
+          onToggleEquity={(value) =>
+            setFilters((state) => ({
+              ...state,
+              equities: toggleValue(state.equities, value),
+            }))
+          }
+          onToggleStatus={(value) =>
+            setFilters((state) => ({
+              ...state,
+              statuses: toggleValue(state.statuses, value),
+            }))
+          }
+        />
+      </div>
     </div>
   );
 }
