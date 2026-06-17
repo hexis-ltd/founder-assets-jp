@@ -25,8 +25,6 @@ const statusTone: Record<ReturnType<typeof getStatusDisplay>["tone"], string> =
       "border-[var(--color-border)] bg-[var(--color-muted-soft)] text-[var(--color-muted)]",
   };
 
-const quickStatuses: UserAssetStatus[] = ["interested", "planned", "applied"];
-
 export function AssetCard({
   asset,
   canTrack,
@@ -46,8 +44,9 @@ export function AssetCard({
   const currentStatus = userState?.status ?? "not_started";
 
   return (
-    <article className="group flex min-h-[360px] flex-col rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm transition-[border-color,box-shadow] hover:border-[var(--color-text)]/25 hover:shadow-md">
-      <div className="flex items-start justify-between gap-4">
+    <article className="grid gap-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-colors hover:border-[var(--color-text)]/25 lg:grid-cols-[minmax(0,1fr)_240px]">
+      <div className="min-w-0">
+        <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate text-xs font-medium text-[var(--color-muted)]">
             {asset.operator}
@@ -63,43 +62,24 @@ export function AssetCard({
         </span>
       </div>
 
-      <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-[var(--color-muted)]">
+        <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--color-muted)]">
         {asset.summary}
       </p>
 
-      {asset.value && (
-        <div className="mt-4 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2.5 text-sm font-medium leading-relaxed text-[var(--color-text)]">
-          {asset.value}
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {asset.assetTypes.slice(0, 4).map((type) => (
+            <span
+              key={type}
+              className="rounded-md border border-[var(--color-border)] px-2 py-1 text-[11px] text-[var(--color-muted)]"
+            >
+              {ASSET_TYPE_LABELS[type]}
+            </span>
+          ))}
         </div>
-      )}
-
-      <div className="mt-4 flex flex-wrap gap-1.5">
-        {asset.assetTypes.slice(0, 3).map((type) => (
-          <span
-            key={type}
-            className="rounded-md bg-[var(--color-muted-soft)] px-2 py-1 text-[11px] font-medium text-[var(--color-text)]"
-          >
-            {ASSET_TYPE_LABELS[type]}
-          </span>
-        ))}
       </div>
 
-      <div className="mt-auto space-y-3 pt-5">
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-relaxed text-[var(--color-muted)]">
-          <span>
-            <span className="text-[var(--color-text)]">フェーズ</span>{" "}
-            {asset.stages.map((stage) => STAGE_LABELS[stage]).join(" / ")}
-          </span>
-          {asset.region && (
-            <span>
-              <span className="text-[var(--color-text)]">地域</span>{" "}
-              {asset.region}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-3">
-          <span className="flex min-w-0 items-center gap-2">
+      <div className="space-y-3 lg:border-l lg:border-[var(--color-border)] lg:pl-4">
+        <div className="flex flex-wrap items-center gap-2">
             <span
               className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusTone[status.tone]}`}
             >
@@ -108,23 +88,29 @@ export function AssetCard({
             <span className="min-w-0 truncate text-[11px] text-[var(--color-muted)]">
               {status.detail}
             </span>
-          </span>
-          <a
-            href={asset.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 rounded-full border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-2)]"
-          >
-            開く →
-          </a>
         </div>
 
-        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-2">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[11px] font-medium text-[var(--color-muted)]">
-              自分の状態
-            </span>
-            {canTrack && (
+        {asset.value && (
+          <p className="text-sm font-medium leading-6 text-[var(--color-text)]">
+            {asset.value}
+          </p>
+        )}
+
+        <div className="space-y-1 text-[11px] leading-relaxed text-[var(--color-muted)]">
+          <p>
+            <span className="text-[var(--color-text)]">フェーズ</span>{" "}
+            {asset.stages.map((stage) => STAGE_LABELS[stage]).join(" / ")}
+          </p>
+          {asset.region && (
+            <p>
+              <span className="text-[var(--color-text)]">地域</span>{" "}
+              {asset.region}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 pt-1">
+          {canTrack ? (
               <select
                 value={currentStatus}
                 disabled={saving}
@@ -134,7 +120,7 @@ export function AssetCard({
                     event.target.value as UserAssetStatus,
                   )
                 }
-                className="h-8 max-w-32 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-text)] disabled:opacity-50"
+              className="h-9 min-w-0 flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-text)] disabled:opacity-50"
               >
                 {Object.entries(USER_ASSET_STATUS_LABELS).map(
                   ([value, label]) => (
@@ -144,34 +130,22 @@ export function AssetCard({
                   ),
                 )}
               </select>
-            )}
-          </div>
-          {canTrack ? (
-            <div className="mt-2 grid grid-cols-3 gap-1">
-              {quickStatuses.map((statusValue) => (
-                <button
-                  key={statusValue}
-                  type="button"
-                  disabled={saving}
-                  onClick={() => onUserStatusChange(asset.id, statusValue)}
-                  className={`h-8 rounded text-[11px] font-medium transition-colors disabled:opacity-50 ${
-                    currentStatus === statusValue
-                      ? "bg-[var(--color-text)] text-[var(--color-bg)]"
-                      : "bg-[var(--color-surface-2)] text-[var(--color-muted)] hover:text-[var(--color-text)]"
-                  }`}
-                >
-                  {USER_ASSET_STATUS_LABELS[statusValue]}
-                </button>
-              ))}
-            </div>
           ) : (
             <a
               href="/signin"
-              className="mt-2 flex h-8 items-center justify-center rounded bg-[var(--color-surface-2)] text-[11px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+              className="flex h-9 min-w-0 flex-1 items-center justify-center rounded-md border border-[var(--color-border)] text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
             >
-              ログインして進捗を保存
+              進捗を保存
             </a>
           )}
+          <a
+            href={asset.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-9 items-center rounded-md bg-[var(--color-text)] px-3 text-xs font-medium text-[var(--color-bg)] transition-opacity hover:opacity-90"
+          >
+            公式
+          </a>
         </div>
       </div>
     </article>
