@@ -62,12 +62,6 @@ export default async function Home() {
               </dd>
             </div>
           ))}
-          <div className="flex items-baseline gap-2">
-            <dt className="text-[var(--color-muted)]">進捗管理</dt>
-            <dd className="font-medium text-[var(--color-text)]">
-              {user ? user.email : "ログインで有効"}
-            </dd>
-          </div>
         </dl>
       </section>
 
