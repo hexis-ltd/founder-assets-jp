@@ -5,6 +5,7 @@
   "description": "日本のスタートアップ・起業家が使える支援アセットの横断データベース",
   "scripts": {
     "dev": "next dev",
+    "validate": "bun run scripts/validate-assets.ts",
     "db:setup": "bun run scripts/setup-db.ts",
     "build": "next build",
     "start": "next start",

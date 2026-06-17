@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { validateAssets } from "../lib/asset-schema";
 import { assets } from "../lib/data";
 
 const databaseUrl = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
@@ -7,10 +8,28 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required");
 }
 
+validateOrThrow();
+
 const sql = neon(databaseUrl);
 
 await createSchema();
 await seedAssets();
+
+// DBへ反映する前にアセットデータを検証する。
+// 不正データ（ID重複・enum外・日付形式不正など）の混入を未然に防ぐ。
+function validateOrThrow() {
+  const issues = validateAssets(assets);
+  const errors = issues.filter((i) => i.level === "error");
+  const warns = issues.filter((i) => i.level === "warn");
+  for (const w of warns) console.warn(`⚠️  [${w.assetId}] ${w.message}`);
+  if (errors.length > 0) {
+    for (const e of errors) console.error(`❌ [${e.assetId}] ${e.message}`);
+    throw new Error(
+      `アセット検証に失敗しました（エラー ${errors.length} 件）。DBへの反映を中止します。`,
+    );
+  }
+  console.log(`✅ 検証OK: ${assets.length} 件（warn ${warns.length} 件）`);
+}
 
 async function createSchema() {
   await sql`create extension if not exists pgcrypto`;
