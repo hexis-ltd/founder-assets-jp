@@ -17,7 +17,7 @@
 - [Tailwind CSS v4](https://tailwindcss.com/)
 - [Vercel](https://vercel.com/) でホスティング
 - [Neon Postgres](https://vercel.com/marketplace/neon)（Vercel Marketplace）で DB
-- email/password 登録 + HttpOnly session cookie
+- email/password 登録 + Google OAuth + HttpOnly session cookie
 
 DB 未接続のローカル環境では `lib/data.ts` の静的データにフォールバックします。Vercel では Neon の無料枠から始め、`DATABASE_URL` を設定して `db:setup` を実行すると DB の asset を表示します。
 
@@ -35,7 +35,21 @@ bun run typecheck
 
 1. Vercel Marketplace から Neon Postgres を project に追加します。
 2. Vercel が発行する `DATABASE_URL` を local `.env.local` にも設定します。
-3. schema 作成と asset 登録を実行します。
+3. Google Cloud Console の OAuth client に callback URL を追加します。
+4. schema 作成と asset 登録を実行します。
+
+必要な環境変数:
+
+```bash
+DATABASE_URL="postgres://..."
+GOOGLE_CLIENT_ID="..."
+GOOGLE_CLIENT_SECRET="..."
+```
+
+Google OAuth の callback URL:
+
+- local: `http://localhost:3000/api/auth/google/callback`
+- Vercel: `https://<your-domain>/api/auth/google/callback`
 
 ```bash
 DATABASE_URL="postgres://..." bun run db:setup

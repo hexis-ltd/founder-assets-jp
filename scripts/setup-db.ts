@@ -18,10 +18,17 @@ async function createSchema() {
     create table if not exists users (
       id uuid primary key default gen_random_uuid(),
       email text not null unique,
-      password_hash text not null,
+      password_hash text,
+      google_sub text,
+      name text,
+      picture text,
       created_at timestamptz not null default now()
     )
   `;
+  await sql`alter table users alter column password_hash drop not null`;
+  await sql`alter table users add column if not exists google_sub text`;
+  await sql`alter table users add column if not exists name text`;
+  await sql`alter table users add column if not exists picture text`;
   await sql`
     create table if not exists user_sessions (
       id uuid primary key default gen_random_uuid(),
@@ -64,6 +71,11 @@ async function createSchema() {
   await sql`
     create index if not exists user_sessions_expires_at_idx
     on user_sessions (expires_at)
+  `;
+  await sql`
+    create unique index if not exists users_google_sub_key
+    on users (google_sub)
+    where google_sub is not null
   `;
   await sql`
     create index if not exists user_asset_states_user_id_idx
