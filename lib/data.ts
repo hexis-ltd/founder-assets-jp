@@ -1,21 +1,31 @@
 import type { Asset } from "./types";
 
 // 日本の起業家・スタートアップが使える支援アセットのキュレーション済みデータ。
-// 内容は変動するため、申込条件・金額・募集時期などの最新情報は必ず各公式サイトを確認してください。
+//
+// 募集時期(application)は変動が激しいため、確定日(deadline/opensAt)は裏取りできたものだけを設定し、
+// それ以外は周期(window)で「次にいつ頃来るか」を表現しています。
+// 金額・条件・締切などの最終情報は必ず各公式サイトでご確認ください。
 // データの追加・修正は GitHub への Pull Request を歓迎します。
-// 最終確認: 2026-06
+
+// 掲載情報の最終確認時点（UIに表示）
+export const LAST_CHECKED = "2026年6月";
 
 export const assets: Asset[] = [
-  // ===== 無料オフィス・インキュベーション =====
+  // ===================================================================
+  // 無料オフィス・インキュベーション
+  // ===================================================================
   {
     id: "flap",
     name: "FLAP",
     operator: "mint（旧 Apricot Ventures）",
+    region: "東京（渋谷）",
     assetTypes: ["free-office", "community", "mentoring"],
     stages: ["idea", "seed"],
     equity: "none",
-    timingType: "periodic",
-    timing: "期別募集（おおむね2〜3ヶ月ごと）",
+    application: {
+      status: "recurring",
+      window: "おおむね2〜3ヶ月ごとに新しい期を募集",
+    },
     value: "渋谷の無料オフィスを約6ヶ月＋メンタリング",
     eligibility: "創業準備中〜創業期の起業家",
     summary:
@@ -27,11 +37,14 @@ export const assets: Asset[] = [
     id: "foundx-founders",
     name: "FoundX Founders Program",
     operator: "東京大学 産学協創推進本部",
+    region: "東京（本郷）",
     assetTypes: ["free-office", "community", "mentoring"],
     stages: ["idea", "seed"],
     equity: "none",
-    timingType: "periodic",
-    timing: "随時/期別（チーム単位で選考）",
+    application: {
+      status: "rolling",
+      note: "随時エントリー・選考（チーム単位）",
+    },
     value: "個室オフィス最大9ヶ月・無償・非エクイティ",
     eligibility: "東京大学の卒業生・研究者など関係者",
     summary:
@@ -43,11 +56,11 @@ export const assets: Asset[] = [
     id: "foundx-fellows",
     name: "FoundX Fellows Program",
     operator: "東京大学 産学協創推進本部",
+    region: "東京（本郷）",
     assetTypes: ["community", "mentoring"],
     stages: ["idea"],
     equity: "none",
-    timingType: "periodic",
-    timing: "期別募集",
+    application: { status: "rolling", note: "随時エントリー・選考" },
     value: "コワーキング席・コミュニティ・無償",
     eligibility: "東京大学関係者でアイデア探索中の個人",
     summary:
@@ -60,11 +73,14 @@ export const assets: Asset[] = [
     name: "東大IPC 1stRound",
     nameEn: "1stRound",
     operator: "東京大学協創プラットフォーム開発（東大IPC）",
+    region: "全国（連携大学）",
     assetTypes: ["grant-subsidy", "mentoring", "community"],
     stages: ["idea", "seed"],
     equity: "none",
-    timingType: "annual",
-    timing: "年1回前後の公募",
+    application: {
+      status: "recurring",
+      window: "毎年公募（例年 夏〜秋にエントリー）",
+    },
     value: "最大1,000万円規模の事業化支援（非返済・非エクイティ）",
     eligibility: "東京大学を含む複数の連携大学の研究者・学生など",
     summary:
@@ -77,11 +93,14 @@ export const assets: Asset[] = [
     name: "青山スタートアップアクセラレーションセンター（ASAC）",
     nameEn: "ASAC",
     operator: "東京都 / 運営事業者",
+    region: "東京",
     assetTypes: ["accelerator", "mentoring", "community"],
     stages: ["seed", "early"],
     equity: "none",
-    timingType: "periodic",
-    timing: "期別募集（年複数期）",
+    application: {
+      status: "recurring",
+      window: "年複数期で募集（1期 約5ヶ月）",
+    },
     value: "無料のアクセラ・プログラム＋メンタリング",
     eligibility: "成長志向のスタートアップ",
     summary:
@@ -93,11 +112,11 @@ export const assets: Asset[] = [
     id: "tokyo-sogyo-station",
     name: "TOKYO創業ステーション",
     operator: "東京都中小企業振興公社",
+    region: "東京",
     assetTypes: ["mentoring", "community", "grant-subsidy"],
     stages: ["idea", "seed"],
     equity: "none",
-    timingType: "always",
-    timing: "通年（相談は予約制）",
+    application: { status: "rolling", note: "通年（相談は予約制）" },
     value: "無料の事業相談・セミナー・助成金情報",
     eligibility: "都内で創業を目指す個人・事業者",
     summary:
@@ -106,15 +125,34 @@ export const assets: Asset[] = [
     tags: ["東京都", "創業相談"],
   },
   {
+    id: "startup-hub-tokyo",
+    name: "Startup Hub Tokyo",
+    operator: "東京都中小企業振興公社",
+    region: "東京",
+    assetTypes: ["community", "mentoring", "free-office"],
+    stages: ["idea", "seed"],
+    equity: "none",
+    application: { status: "rolling", note: "通年（会員登録は無料）" },
+    value: "無料の交流スペース・相談・イベント",
+    eligibility: "起業に関心のある個人・初期起業家",
+    summary:
+      "起業を志す人のための無料拠点。コンシェルジュ相談、先輩起業家とのネットワーキング、各種イベントを無償で提供する。",
+    url: "https://startup-station.jp/m/startuphubtokyo/",
+    tags: ["東京都", "コミュニティ"],
+  },
+  {
     id: "shibuya-qws",
     name: "SHIBUYA QWS",
     nameEn: "QWS",
     operator: "渋谷スクランブルスクエア",
+    region: "東京（渋谷）",
     assetTypes: ["community", "free-office", "mentoring"],
     stages: ["idea", "seed"],
     equity: "none",
-    timingType: "periodic",
-    timing: "プロジェクト会員は期別募集",
+    application: {
+      status: "recurring",
+      window: "四半期ごとにプロジェクト会員を募集",
+    },
     value: "会員制の共創施設・プロジェクト支援",
     eligibility: "問いを起点に活動する個人・チーム",
     summary:
@@ -122,18 +160,78 @@ export const assets: Asset[] = [
     url: "https://shibuya-qws.com/",
     tags: ["渋谷", "共創"],
   },
+  {
+    id: "fukuoka-growth-next",
+    name: "Fukuoka Growth Next（FGN）",
+    nameEn: "FGN",
+    operator: "福岡市 ほか",
+    region: "福岡",
+    assetTypes: ["free-office", "community", "mentoring"],
+    stages: ["idea", "seed", "early"],
+    equity: "none",
+    application: { status: "rolling", note: "入居・会員は随時審査" },
+    value: "官民共働の拠点・低コストの入居・支援",
+    eligibility: "福岡を拠点とするスタートアップ",
+    summary:
+      "旧大名小学校を活用した福岡市の官民共働スタートアップ支援施設。低コストの入居、メンタリング、コミュニティ、イベントを提供する。",
+    url: "https://growth-next.com/",
+    tags: ["福岡", "地方拠点"],
+  },
+  {
+    id: "osaka-innovation-hub",
+    name: "Osaka Innovation Hub（OIH）",
+    nameEn: "OIH",
+    operator: "大阪市 / 大阪産業局",
+    region: "大阪",
+    assetTypes: ["community", "mentoring", "overseas"],
+    stages: ["idea", "seed", "early"],
+    equity: "none",
+    application: { status: "rolling", note: "通年（イベント・プログラムは随時）" },
+    value: "無料の交流拠点・ピッチ・海外連携",
+    eligibility: "起業家・イノベーター（誰でも）",
+    summary:
+      "大阪市が運営するイノベーション創出拠点。グランフロント大阪を拠点に、年間多数のイベント、メンタリング、海外アクセラ連携などを提供。",
+    url: "https://www.innovation-osaka.jp/",
+    tags: ["大阪", "地方拠点"],
+  },
+  {
+    id: "yoxo-yokohama",
+    name: "YOXO（横浜スタートアップ支援）",
+    nameEn: "YOXO",
+    operator: "横浜市 / 横浜未来機構",
+    region: "神奈川（横浜）",
+    assetTypes: ["accelerator", "community", "free-office"],
+    stages: ["seed", "early"],
+    equity: "none",
+    application: {
+      status: "recurring",
+      window: "アクセラは年次公募（YOXO ACCELERATOR）",
+    },
+    value: "無料アクセラ・交流拠点（YOXO BOX）",
+    eligibility: "横浜での成長を目指すスタートアップ",
+    summary:
+      "横浜市のスタートアップ成長支援ブランド。交流拠点YOXO BOXや、専門家伴走型のYOXO ACCELERATORなどを通じて事業成長を支援する。",
+    url: "https://yoxo-yokohama.com/",
+    tags: ["横浜", "地方拠点"],
+  },
 
-  // ===== 人材発掘・育成（タレントプログラム） =====
+  // ===================================================================
+  // 人材発掘・育成（タレントプログラム）
+  // ===================================================================
   {
     id: "mitou-it",
     name: "未踏IT人材発掘・育成事業",
     nameEn: "MITOU",
     operator: "情報処理推進機構（IPA）",
+    region: "全国",
     assetTypes: ["talent-program", "grant-subsidy", "mentoring"],
     stages: ["idea"],
     equity: "none",
-    timingType: "annual",
-    timing: "年1回公募（おおむね春）",
+    application: {
+      status: "recurring",
+      window: "毎年11月エントリー開始〜翌3月締切",
+      note: "2026年度は2026/3/12で公募終了。次は2026年度後半に告知見込み",
+    },
     value: "開発資金の支援＋トップエンジニアによるPM指導",
     eligibility: "25歳未満などの突出したIT人材（個人/チーム）",
     summary:
@@ -145,11 +243,14 @@ export const assets: Asset[] = [
     id: "mitou-advanced",
     name: "未踏アドバンスト事業",
     operator: "情報処理推進機構（IPA）",
+    region: "全国",
     assetTypes: ["talent-program", "grant-subsidy", "mentoring"],
     stages: ["idea", "seed"],
     equity: "none",
-    timingType: "annual",
-    timing: "年1回公募",
+    application: {
+      status: "recurring",
+      window: "上期・下期の年2回（おおむね12〜3月にエントリー）",
+    },
     value: "事業化に向けた費用支援＋伴走",
     eligibility: "技術シーズの事業化を目指す個人・チーム（年齢上限なし）",
     summary:
@@ -161,12 +262,15 @@ export const assets: Asset[] = [
     id: "mitou-junior",
     name: "未踏ジュニア",
     operator: "一般社団法人 未踏",
+    region: "全国",
     assetTypes: ["talent-program", "grant-subsidy", "mentoring"],
     stages: ["idea"],
     equity: "none",
-    timingType: "annual",
-    timing: "年1回公募（春）",
-    value: "最大支援金＋メンタリング",
+    application: {
+      status: "recurring",
+      window: "毎年春（おおむね3〜4月）に公募",
+    },
+    value: "支援金＋メンタリング",
     eligibility: "17歳以下のクリエイター",
     summary:
       "17歳以下の若手クリエイターを対象にした未踏。突出したアイデアと技術力を持つ小中高生に、開発資金とメンターを提供する。",
@@ -177,29 +281,54 @@ export const assets: Asset[] = [
     id: "masason-foundation",
     name: "孫正義育英財団",
     operator: "公益財団法人 孫正義育英財団",
+    region: "全国",
     assetTypes: ["talent-program", "grant-subsidy", "community"],
     stages: ["idea"],
     equity: "none",
-    timingType: "annual",
-    timing: "年1回前後の募集",
-    value: "支援金・施設・ネットワークへのアクセス",
+    application: {
+      status: "recurring",
+      window: "毎年募集（時期は年により変動）",
+    },
+    value: "支援金・施設（Infinity）・ネットワーク",
     eligibility: "高い志と異能を持つ若者（25歳以下目安）",
     summary:
       "高い志を持つ若者を支援する財団。財団生には活動支援や拠点（Infinity）、人的ネットワークなどを提供する。",
     url: "https://masason-foundation.org/",
     tags: ["若手", "異能"],
   },
+  {
+    id: "tokyo-startup-gateway",
+    name: "TOKYO STARTUP GATEWAY（TSG）",
+    nameEn: "TSG",
+    operator: "東京都 / NPO ETIC.",
+    region: "東京",
+    assetTypes: ["talent-program", "mentoring", "community"],
+    stages: ["idea"],
+    equity: "none",
+    application: {
+      status: "recurring",
+      window: "毎年 初夏〜夏に公募（ビジネスコンテスト型）",
+    },
+    value: "無料の起業家育成プログラム＋賞金・伴走",
+    eligibility: "都内在住・在勤などの起業を志す個人",
+    summary:
+      "東京都の起業家発掘・育成プログラム。400字の応募から始まり、半年間のメンタリングを経て事業化を目指す登竜門型コンテスト。参加無料。",
+    url: "https://tokyo-startup.jp/",
+    tags: ["東京都", "ビジコン"],
+  },
 
-  // ===== クラウド・SaaS クレジット =====
+  // ===================================================================
+  // クラウド・SaaS クレジット
+  // ===================================================================
   {
     id: "aws-activate",
     name: "AWS Activate",
     operator: "Amazon Web Services",
+    region: "全国",
     assetTypes: ["cloud-credit"],
     stages: ["seed", "early"],
     equity: "none",
-    timingType: "always",
-    timing: "通年（条件を満たせば随時申請）",
+    application: { status: "rolling", note: "通年（条件を満たせば随時申請）" },
     value: "最大 $100,000 のAWSクレジット",
     eligibility: "対象VC/アクセラ等の紹介、または自己応募枠",
     summary:
@@ -211,11 +340,11 @@ export const assets: Asset[] = [
     id: "ms-startups",
     name: "Microsoft for Startups Founders Hub",
     operator: "Microsoft",
+    region: "全国",
     assetTypes: ["cloud-credit", "mentoring"],
     stages: ["idea", "seed", "early"],
     equity: "none",
-    timingType: "always",
-    timing: "通年（オンラインで随時申請）",
+    application: { status: "rolling", note: "通年（オンラインで随時申請）" },
     value: "最大 $150,000 相当のAzure等クレジット＋OpenAI等の特典",
     eligibility: "ほぼ全ての創業初期スタートアップ（VC不要枠あり）",
     summary:
@@ -227,11 +356,11 @@ export const assets: Asset[] = [
     id: "google-cloud-startups",
     name: "Google for Startups Cloud Program",
     operator: "Google Cloud",
+    region: "全国",
     assetTypes: ["cloud-credit", "mentoring"],
     stages: ["seed", "early"],
     equity: "none",
-    timingType: "always",
-    timing: "通年（随時申請）",
+    application: { status: "rolling", note: "通年（随時申請）" },
     value: "最大 $200,000（AI特化枠は更に上限あり）のGCPクレジット",
     eligibility: "創業10年以内・一定の資金調達状況などの条件",
     summary:
@@ -243,11 +372,11 @@ export const assets: Asset[] = [
     id: "nvidia-inception",
     name: "NVIDIA Inception",
     operator: "NVIDIA",
+    region: "全国",
     assetTypes: ["cloud-credit", "community", "mentoring"],
     stages: ["seed", "early", "growth"],
     equity: "none",
-    timingType: "always",
-    timing: "通年（随時申請・無料）",
+    application: { status: "rolling", note: "通年（随時申請・無料）" },
     value: "ハード/ソフト割引・技術支援・VCネットワーク",
     eligibility: "AI・データサイエンス系スタートアップ",
     summary:
@@ -259,11 +388,11 @@ export const assets: Asset[] = [
     id: "notion-startups",
     name: "Notion for Startups",
     operator: "Notion",
+    region: "全国",
     assetTypes: ["cloud-credit"],
     stages: ["seed", "early"],
     equity: "none",
-    timingType: "always",
-    timing: "通年（パートナー経由で申請）",
+    application: { status: "rolling", note: "通年（パートナー経由で申請）" },
     value: "Notion Plus + AI の無料クレジット",
     eligibility: "提携アクセラ/VC等のパートナーに所属",
     summary:
@@ -275,11 +404,11 @@ export const assets: Asset[] = [
     id: "hubspot-startups",
     name: "HubSpot for Startups",
     operator: "HubSpot",
+    region: "全国",
     assetTypes: ["cloud-credit"],
     stages: ["seed", "early"],
     equity: "none",
-    timingType: "always",
-    timing: "通年（パートナー経由で申請）",
+    application: { status: "rolling", note: "通年（パートナー経由で申請）" },
     value: "初年度最大90%割引などの段階的ディスカウント",
     eligibility: "提携VC/アクセラ等のネットワークに所属",
     summary:
@@ -287,18 +416,55 @@ export const assets: Asset[] = [
     url: "https://www.hubspot.com/startups",
     tags: ["SaaS", "CRM"],
   },
+  {
+    id: "cloudflare-startups",
+    name: "Cloudflare for Startups",
+    operator: "Cloudflare",
+    region: "全国",
+    assetTypes: ["cloud-credit"],
+    stages: ["seed", "early"],
+    equity: "none",
+    application: { status: "rolling", note: "通年（提携パートナー経由）" },
+    value: "Cloudflare各種プランのクレジット",
+    eligibility: "提携VC/アクセラ等のパートナーに所属",
+    summary:
+      "CDN・セキュリティ・エッジ実行環境などCloudflare製品のクレジットを提供。提携パートナーのスタートアップが対象。",
+    url: "https://www.cloudflare.com/forstartups/",
+    tags: ["インフラ", "エッジ"],
+  },
+  {
+    id: "mongodb-startups",
+    name: "MongoDB for Startups",
+    operator: "MongoDB",
+    region: "全国",
+    assetTypes: ["cloud-credit"],
+    stages: ["seed", "early"],
+    equity: "none",
+    application: { status: "rolling", note: "通年（オンライン申請）" },
+    value: "Atlasクレジット＋技術アドバイザー支援",
+    eligibility: "創業初期のスタートアップ",
+    summary:
+      "マネージドDB「Atlas」の利用クレジットに加え、技術アドバイザーやパートナー特典を提供する。",
+    url: "https://www.mongodb.com/startups",
+    tags: ["インフラ", "DB"],
+  },
 
-  // ===== アクセラレーター（民間・コーポレート） =====
+  // ===================================================================
+  // アクセラレーター（民間・コーポレート）
+  // ===================================================================
   {
     id: "onlab",
     name: "Open Network Lab（Onlab）",
     nameEn: "Onlab",
     operator: "デジタルガレージ",
+    region: "全国",
     assetTypes: ["accelerator", "equity-investment", "mentoring"],
     stages: ["seed"],
     equity: "required",
-    timingType: "periodic",
-    timing: "期別募集（Seed Acceleratorは年複数回）",
+    application: {
+      status: "recurring",
+      window: "Seed Accelerator は年複数回のバッチ",
+    },
     value: "出資＋約3〜4ヶ月の集中支援＋デモデイ",
     eligibility: "シード期のスタートアップ",
     summary:
@@ -310,11 +476,14 @@ export const assets: Asset[] = [
     id: "incubate-camp",
     name: "Incubate Camp",
     operator: "インキュベイトファンド",
+    region: "全国",
     assetTypes: ["accelerator", "equity-investment", "mentoring"],
     stages: ["seed", "early"],
     equity: "optional",
-    timingType: "annual",
-    timing: "年1回前後",
+    application: {
+      status: "recurring",
+      window: "毎年開催（おおむね夏〜秋）",
+    },
     value: "トップVCとの合宿型メンタリング＋投資機会",
     eligibility: "起業直後〜シードの起業家",
     summary:
@@ -323,15 +492,109 @@ export const assets: Asset[] = [
     tags: ["合宿", "VC伴走"],
   },
   {
+    id: "01booster",
+    name: "01Booster Accelerator",
+    nameEn: "01Booster",
+    operator: "ゼロワンブースター",
+    region: "全国",
+    assetTypes: ["accelerator", "mentoring", "community"],
+    stages: ["seed", "early"],
+    equity: "optional",
+    application: {
+      status: "recurring",
+      window: "プログラム/テーマごとに公募",
+    },
+    value: "大企業連携の事業共創・メンタリング",
+    eligibility: "成長志向のスタートアップ・新規事業家",
+    summary:
+      "国内最大級のアクセラレーター運営会社。大企業や自治体と連携した数多くのアクセラレーションプログラムを通じ、事業共創とメンタリングを提供する。",
+    url: "https://01booster.co.jp/",
+    tags: ["オープンイノベーション", "事業共創"],
+  },
+  {
+    id: "samurai-incubate",
+    name: "Samurai Incubate",
+    operator: "サムライインキュベート",
+    region: "全国",
+    assetTypes: ["equity-investment", "accelerator", "mentoring"],
+    stages: ["seed"],
+    equity: "required",
+    application: { status: "rolling", note: "随時、投資・支援を検討" },
+    value: "シード出資＋ハンズオン支援",
+    eligibility: "シード期スタートアップ",
+    summary:
+      "シード期に特化した投資・育成会社。出資とともに採用・事業開発などのハンズオン支援を行い、大企業連携プログラムも運営する。",
+    url: "https://www.samurai-incubate.asia/",
+    tags: ["シード", "出資あり"],
+  },
+  {
+    id: "antler-japan",
+    name: "Antler Japan",
+    operator: "Antler",
+    region: "全国",
+    assetTypes: ["accelerator", "equity-investment", "community"],
+    stages: ["idea", "seed"],
+    equity: "required",
+    application: {
+      status: "recurring",
+      window: "年複数回のコーホート（共同創業者探索から）",
+    },
+    value: "共同創業者マッチング＋初期出資",
+    eligibility: "起業を志す個人（チーム未結成でも可）",
+    summary:
+      "グローバル展開する「ゼロからの起業」支援プラットフォーム。共同創業者探索のコーホートから始まり、有望チームへ初期出資を行う。",
+    url: "https://www.antler.co/location/japan",
+    tags: ["共同創業", "グローバル"],
+  },
+  {
+    id: "deepcore",
+    name: "DEEPCORE（KERNEL）",
+    operator: "ディープコア",
+    region: "全国",
+    assetTypes: ["equity-investment", "community", "free-office"],
+    stages: ["seed", "early"],
+    equity: "required",
+    application: { status: "rolling", note: "随時、投資・インキュベーションを検討" },
+    value: "AI特化の出資＋コミュニティKERNEL＋GPU環境",
+    eligibility: "AI領域のスタートアップ・研究者",
+    summary:
+      "AIに特化したインキュベーター。出資に加え、コミュニティ「KERNEL」やGPU計算環境、研究者ネットワークへのアクセスを提供する。",
+    url: "https://deepcore.jp/",
+    tags: ["AI", "出資あり"],
+  },
+  {
+    id: "beyond-next-brave",
+    name: "Beyond Next Ventures「BRAVE」",
+    nameEn: "BRAVE",
+    operator: "Beyond Next Ventures",
+    region: "全国",
+    assetTypes: ["accelerator", "mentoring", "equity-investment"],
+    stages: ["idea", "seed"],
+    equity: "optional",
+    application: {
+      status: "recurring",
+      window: "毎年シーズン開催（アクセラレーション公募）",
+    },
+    value: "アカデミア発の事業化伴走＋投資機会",
+    eligibility: "研究シーズを持つ研究者・起業家",
+    summary:
+      "技術系・アカデミア発スタートアップに特化したアクセラレーター。研究シーズの事業化を、メンタリングと投資検討を通じて支援する。",
+    url: "https://beyondnextventures.com/",
+    tags: ["ディープテック", "アカデミア"],
+  },
+  {
     id: "plugandplay-japan",
     name: "Plug and Play Japan",
     operator: "Plug and Play Japan",
+    region: "全国",
     assetTypes: ["accelerator", "community", "mentoring"],
     stages: ["seed", "early", "growth"],
     equity: "none",
-    timingType: "periodic",
-    timing: "バッチ制（年2回前後）",
-    value: "大企業との事業共創・無償アクセラ",
+    application: {
+      status: "recurring",
+      window: "テーマ別バッチ（年2回前後）",
+    },
+    value: "大企業との事業共創・非エクイティのアクセラ",
     eligibility: "各業界テーマに合致するスタートアップ",
     summary:
       "シリコンバレー発のアクセラ／イノベーションプラットフォーム。テーマ別バッチで大企業とのマッチングやPoC機会を非エクイティで提供。",
@@ -342,11 +605,14 @@ export const assets: Asset[] = [
     id: "google-accelerator",
     name: "Google for Startups Accelerator",
     operator: "Google",
+    region: "全国",
     assetTypes: ["accelerator", "mentoring", "cloud-credit"],
     stages: ["seed", "early", "growth"],
     equity: "none",
-    timingType: "periodic",
-    timing: "バッチ制の公募（テーマ別）",
+    application: {
+      status: "recurring",
+      window: "テーマ別バッチで随時公募",
+    },
     value: "非エクイティの集中メンタリング＋Google技術支援",
     eligibility: "成長期のテック系スタートアップ",
     summary:
@@ -358,11 +624,14 @@ export const assets: Asset[] = [
     id: "kddi-mugen-labo",
     name: "KDDI ∞ Labo（ムゲンラボ）",
     operator: "KDDI",
+    region: "全国",
     assetTypes: ["accelerator", "community", "mentoring"],
     stages: ["seed", "early"],
     equity: "optional",
-    timingType: "periodic",
-    timing: "プログラム期別募集",
+    application: {
+      status: "recurring",
+      window: "プログラム期ごとに募集",
+    },
     value: "大企業連携・メンタリング・事業共創",
     eligibility: "成長志向のスタートアップ",
     summary:
@@ -374,11 +643,14 @@ export const assets: Asset[] = [
     id: "tribus",
     name: "TRIBUS",
     operator: "リコー",
+    region: "全国",
     assetTypes: ["accelerator", "mentoring"],
     stages: ["seed", "early"],
     equity: "none",
-    timingType: "annual",
-    timing: "年1回前後の公募",
+    application: {
+      status: "recurring",
+      window: "毎年公募（例年 夏頃）",
+    },
     value: "リコーのアセット活用・社内外共創",
     eligibility: "社外スタートアップ＋社内起業家",
     summary:
@@ -387,16 +659,82 @@ export const assets: Asset[] = [
     tags: ["コーポレート", "共創"],
   },
 
-  // ===== 公的・グローバル展開 =====
+  // ===================================================================
+  // ピッチ・登壇機会
+  // ===================================================================
+  {
+    id: "ivs-launchpad",
+    name: "IVS LAUNCHPAD",
+    operator: "IVS",
+    region: "全国",
+    assetTypes: ["community", "mentoring"],
+    stages: ["seed", "early"],
+    equity: "none",
+    application: {
+      status: "recurring",
+      window: "毎年（IVS開催に合わせて公募）",
+    },
+    value: "国内最大級のピッチ登壇・露出機会",
+    eligibility: "選考を通過したスタートアップ",
+    summary:
+      "国内有数のスタートアップカンファレンスIVSのピッチコンテスト。登壇により投資家・事業会社への露出と認知獲得の機会を得られる。",
+    url: "https://www.ivs.events/",
+    tags: ["ピッチ", "露出"],
+  },
+  {
+    id: "icc-catapult",
+    name: "ICC スタートアップ・カタパルト",
+    operator: "ICCパートナーズ",
+    region: "全国",
+    assetTypes: ["community", "mentoring"],
+    stages: ["seed", "early", "growth"],
+    equity: "none",
+    application: {
+      status: "recurring",
+      window: "年2回（ICCサミットに合わせて公募）",
+    },
+    value: "経営者コミュニティでのピッチ登壇機会",
+    eligibility: "選考を通過したスタートアップ",
+    summary:
+      "ICCサミットで開催される登壇型ピッチ。質の高い経営者コミュニティの前でのプレゼン機会と、強いネットワークへのアクセスを提供する。",
+    url: "https://www.industry-co-creation.com/",
+    tags: ["ピッチ", "コミュニティ"],
+  },
+  {
+    id: "tech-planter",
+    name: "TECH PLANTER",
+    operator: "リバネス",
+    region: "全国",
+    assetTypes: ["community", "mentoring", "grant-subsidy"],
+    stages: ["idea", "seed"],
+    equity: "none",
+    application: {
+      status: "recurring",
+      window: "毎年シーズン開催（分野別の研究シーズコンテスト）",
+    },
+    value: "研究シーズの事業化伴走＋パートナー連携",
+    eligibility: "研究者・ディープテック起業家",
+    summary:
+      "リバネスが運営する研究シーズの事業化プラットフォーム。分野別コンテストと伴走支援を通じて、ディープテックの種を事業へと育てる。",
+    url: "https://techplanter.com/",
+    tags: ["ディープテック", "研究シーズ"],
+  },
+
+  // ===================================================================
+  // 公的・グローバル展開
+  // ===================================================================
   {
     id: "j-startup",
     name: "J-Startup",
     operator: "経済産業省",
+    region: "全国",
     assetTypes: ["community", "overseas", "mentoring"],
     stages: ["early", "growth"],
     equity: "none",
-    timingType: "annual",
-    timing: "推薦に基づく選定（不定期）",
+    application: {
+      status: "closed",
+      note: "一般公募ではなく推薦に基づく選定（不定期）",
+    },
     value: "官民の集中支援・海外展開・広報露出",
     eligibility: "推薦により選定された有望スタートアップ",
     summary:
@@ -408,11 +746,14 @@ export const assets: Asset[] = [
     id: "j-starx",
     name: "J-StarX",
     operator: "経済産業省",
+    region: "全国 → 海外",
     assetTypes: ["overseas", "talent-program", "mentoring"],
     stages: ["seed", "early", "growth"],
     equity: "none",
-    timingType: "periodic",
-    timing: "コース別に随時公募",
+    application: {
+      status: "recurring",
+      window: "コース別に随時公募（年間を通じて多数）",
+    },
     value: "海外派遣・グローバル起業家育成プログラム",
     eligibility: "起業家・起業を志す学生・企業内人材など",
     summary:
@@ -425,11 +766,14 @@ export const assets: Asset[] = [
     name: "グローバル・スタートアップ・アクセラレーションプログラム（GSAP）",
     nameEn: "JETRO GSAP",
     operator: "日本貿易振興機構（JETRO）",
+    region: "全国 → 海外",
     assetTypes: ["overseas", "accelerator", "mentoring"],
     stages: ["early", "growth"],
     equity: "none",
-    timingType: "annual",
-    timing: "年1回前後の公募",
+    application: {
+      status: "recurring",
+      window: "毎年公募（例年 春〜初夏）",
+    },
     value: "世界トップアクセラによるエクイティフリー支援",
     eligibility: "海外展開を目指すスタートアップ",
     summary:
@@ -441,11 +785,14 @@ export const assets: Asset[] = [
     id: "japan-innovation-campus",
     name: "Japan Innovation Campus",
     operator: "経済産業省 / JETRO",
+    region: "米国（シリコンバレー）",
     assetTypes: ["overseas", "community"],
     stages: ["early", "growth"],
     equity: "none",
-    timingType: "varies",
-    timing: "随時（入居・利用は審査あり）",
+    application: {
+      status: "rolling",
+      note: "利用・入居は審査制（随時）",
+    },
     value: "シリコンバレー拠点の活動スペース・現地ネットワーク",
     eligibility: "米国展開を狙うスタートアップ・支援機関",
     summary:
@@ -454,17 +801,23 @@ export const assets: Asset[] = [
     tags: ["シリコンバレー", "海外拠点"],
   },
 
-  // ===== 補助金・助成金・公的資金 =====
+  // ===================================================================
+  // 補助金・助成金・公的資金
+  // ===================================================================
   {
     id: "nedo-nep",
     name: "NEDO 研究開発型スタートアップ支援（NEP / STS / DTSU 等）",
     nameEn: "NEDO",
     operator: "新エネルギー・産業技術総合開発機構（NEDO）",
+    region: "全国",
     assetTypes: ["grant-subsidy", "mentoring"],
     stages: ["seed", "early"],
     equity: "none",
-    timingType: "annual",
-    timing: "事業ごとに年1回前後の公募",
+    application: {
+      status: "recurring",
+      window: "毎年1〜4月に公募（コース別）",
+      note: "2026年度は開拓2/24・躍進4/17で締切（終了）。次年度は2027年初頭見込み",
+    },
     value: "研究開発費の助成＋メンター支援（事業により規模が異なる）",
     eligibility: "研究開発型（ディープテック）スタートアップ",
     summary:
@@ -476,11 +829,17 @@ export const assets: Asset[] = [
     id: "tokyo-sogyo-grant",
     name: "東京都 創業助成事業",
     operator: "東京都中小企業振興公社",
+    region: "東京",
     assetTypes: ["grant-subsidy"],
     stages: ["idea", "seed"],
     equity: "none",
-    timingType: "periodic",
-    timing: "年複数回の募集",
+    application: {
+      status: "upcoming",
+      opensAt: "2026-09-29",
+      deadline: "2026-10-08",
+      window: "毎年 4月・10月頃の年2回",
+      note: "第2回（令和8年度）の申請受付。第1回は4/16で終了",
+    },
     value: "上限400万円・助成率2/3（年度により変動）",
     eligibility: "都内で創業予定/創業初期かつ一定要件を満たす者",
     summary:
@@ -489,14 +848,54 @@ export const assets: Asset[] = [
     tags: ["東京都", "助成金"],
   },
   {
+    id: "smrj-fastar",
+    name: "中小機構 FASTAR",
+    nameEn: "FASTAR",
+    operator: "中小企業基盤整備機構（中小機構）",
+    region: "全国",
+    assetTypes: ["accelerator", "mentoring", "grant-subsidy"],
+    stages: ["seed", "early"],
+    equity: "none",
+    application: {
+      status: "recurring",
+      window: "毎年公募（ギア期ごと）",
+    },
+    value: "公的アクセラによる非エクイティの集中伴走",
+    eligibility: "成長を目指すスタートアップ・中小企業",
+    summary:
+      "中小機構が運営する非エクイティのアクセラレーション。専属サポーターによる事業計画づくりや資金調達準備の集中伴走を無償で提供する。",
+    url: "https://fastar.smrj.go.jp/",
+    tags: ["公的支援", "非エクイティ"],
+  },
+  {
+    id: "sbir",
+    name: "SBIR制度（中小企業技術革新制度）",
+    nameEn: "SBIR",
+    operator: "内閣府 / 各省庁",
+    region: "全国",
+    assetTypes: ["grant-subsidy"],
+    stages: ["seed", "early"],
+    equity: "none",
+    application: {
+      status: "recurring",
+      window: "各省庁の指定補助金として年次公募",
+    },
+    value: "研究開発補助＋随意契約等の出口支援",
+    eligibility: "研究開発に取り組むスタートアップ・中小企業",
+    summary:
+      "国の研究開発予算をスタートアップ等に重点配分する制度。各省庁の指定補助金を通じた研究開発フェーズ別の支援と、公共調達への接続を図る。",
+    url: "https://www8.cao.go.jp/cstp/sbir/index.html",
+    tags: ["研究開発", "公共調達"],
+  },
+  {
     id: "jfc-startup-loan",
     name: "日本公庫 スタートアップ支援資金 / 新規開業資金",
     operator: "日本政策金融公庫",
+    region: "全国",
     assetTypes: ["funding"],
     stages: ["idea", "seed", "early"],
     equity: "none",
-    timingType: "always",
-    timing: "通年（随時申込）",
+    application: { status: "rolling", note: "通年（随時申込）" },
     value: "創業・成長期向けの融資（条件により無担保・無保証）",
     eligibility: "創業予定者・スタートアップ",
     summary:
@@ -508,11 +907,15 @@ export const assets: Asset[] = [
     id: "monozukuri-hojokin",
     name: "ものづくり・商業・サービス生産性向上促進補助金",
     operator: "中小企業庁 / 全国中央会",
+    region: "全国",
     assetTypes: ["grant-subsidy"],
     stages: ["early", "growth"],
     equity: "none",
-    timingType: "periodic",
-    timing: "公募回ごと（年複数回）",
+    application: {
+      status: "recurring",
+      window: "公募回ごと（年数回）",
+      note: "2026年度以降は新事業進出補助金との統合・再編が予定",
+    },
     value: "設備投資・試作開発費の補助（枠により数百万〜数千万円）",
     eligibility: "中小企業・小規模事業者（要件あり）",
     summary:
@@ -521,16 +924,18 @@ export const assets: Asset[] = [
     tags: ["補助金", "設備投資"],
   },
 
-  // ===== 横断データベース・情報ハブ =====
+  // ===================================================================
+  // 横断データベース・情報ハブ
+  // ===================================================================
   {
     id: "meti-startup-list",
     name: "経済産業省 スタートアップ支援策一覧",
     operator: "経済産業省",
+    region: "全国",
     assetTypes: ["grant-subsidy", "community"],
     stages: ["any"],
     equity: "none",
-    timingType: "varies",
-    timing: "随時更新（PDF/カオスマップ）",
+    application: { status: "rolling", note: "情報資料（随時更新・カオスマップ）" },
     value: "補助金・融資・税制など官系施策を一覧化",
     eligibility: "すべての起業家・スタートアップ",
     summary:
@@ -542,11 +947,11 @@ export const assets: Asset[] = [
     id: "startup-portal-cas",
     name: "スタートアップ育成ポータルサイト",
     operator: "内閣官房 / 内閣府",
+    region: "全国",
     assetTypes: ["community"],
     stages: ["any"],
     equity: "none",
-    timingType: "always",
-    timing: "通年（情報ポータル）",
+    application: { status: "rolling", note: "情報ポータル（通年）" },
     value: "5か年計画ベースの政府支援への入口",
     eligibility: "すべての起業家・スタートアップ",
     summary:
@@ -558,11 +963,11 @@ export const assets: Asset[] = [
     id: "foundx-resources",
     name: "FoundX Startup Resources",
     operator: "東京大学 FoundX",
+    region: "全国",
     assetTypes: ["community"],
     stages: ["any"],
     equity: "none",
-    timingType: "always",
-    timing: "通年（記事データベース）",
+    application: { status: "rolling", note: "ナレッジDB（通年・無償）" },
     value: "300本以上の起業ノウハウ・翻訳カリキュラム",
     eligibility: "すべての起業家",
     summary:
