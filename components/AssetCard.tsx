@@ -1,8 +1,11 @@
 import {
   type Asset,
+  type UserAssetState,
+  type UserAssetStatus,
   ASSET_TYPE_LABELS,
   EQUITY_LABELS,
   STAGE_LABELS,
+  USER_ASSET_STATUS_LABELS,
   getStatusDisplay,
 } from "@/lib/types";
 
@@ -22,16 +25,25 @@ const statusTone: Record<ReturnType<typeof getStatusDisplay>["tone"], string> =
       "border-[var(--color-border)] bg-[var(--color-muted-soft)] text-[var(--color-muted)]",
   };
 
-export function AssetCard({ asset, now }: { asset: Asset; now?: Date }) {
+export function AssetCard({
+  asset,
+  canTrack,
+  now,
+  onUserStatusChange,
+  saving,
+  userState,
+}: {
+  asset: Asset;
+  canTrack: boolean;
+  now?: Date;
+  onUserStatusChange: (assetId: string, status: UserAssetStatus) => void;
+  saving: boolean;
+  userState?: UserAssetState;
+}) {
   const status = getStatusDisplay(asset.application, now);
 
   return (
-    <a
-      href={asset.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group flex min-h-[320px] flex-col rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[0_18px_50px_-42px_rgb(0_0_0/0.55)] transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-[var(--color-text)]/25 hover:shadow-[0_24px_60px_-44px_rgb(0_0_0/0.7)]"
-    >
+    <article className="group flex min-h-[350px] flex-col rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[0_18px_50px_-42px_rgb(0_0_0/0.55)] transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-[var(--color-text)]/25 hover:shadow-[0_24px_60px_-44px_rgb(0_0_0/0.7)]">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate text-xs font-medium text-[var(--color-muted)]">
@@ -82,6 +94,7 @@ export function AssetCard({ asset, now }: { asset: Asset; now?: Date }) {
             </span>
           )}
         </div>
+
         <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-3">
           <span className="flex min-w-0 items-center gap-2">
             <span
@@ -93,11 +106,47 @@ export function AssetCard({ asset, now }: { asset: Asset; now?: Date }) {
               {status.detail}
             </span>
           </span>
-          <span className="shrink-0 text-xs font-medium text-[var(--color-text)] opacity-60 transition-opacity group-hover:opacity-100">
+          <a
+            href={asset.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 text-xs font-medium text-[var(--color-text)] opacity-60 transition-opacity group-hover:opacity-100"
+          >
             開く →
+          </a>
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[11px] font-medium text-[var(--color-muted)]">
+            自分の状態
           </span>
+          {canTrack ? (
+            <select
+              value={userState?.status ?? "not_started"}
+              disabled={saving}
+              onChange={(event) =>
+                onUserStatusChange(
+                  asset.id,
+                  event.target.value as UserAssetStatus,
+                )
+              }
+              className="h-8 max-w-36 rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-text)] disabled:opacity-50"
+            >
+              {Object.entries(USER_ASSET_STATUS_LABELS).map(
+                ([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ),
+              )}
+            </select>
+          ) : (
+            <span className="rounded-full bg-[var(--color-muted-soft)] px-2.5 py-1 text-[11px] text-[var(--color-muted)]">
+              ログインで管理
+            </span>
+          )}
         </div>
       </div>
-    </a>
+    </article>
   );
 }

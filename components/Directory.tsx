@@ -1,14 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
 import { AssetCard } from "@/components/AssetCard";
-import { assets, LAST_CHECKED } from "@/lib/data";
+import type { PublicUser } from "@/lib/auth/session";
+import { LAST_CHECKED } from "@/lib/data";
 import {
   type ApplicationStatus,
   type Asset,
   type AssetType,
   type Equity,
   type Stage,
+  type UserAssetState,
+  type UserAssetStatus,
   ASSET_TYPE_LABELS,
   EQUITY_LABELS,
   STAGE_LABELS,
@@ -62,7 +72,7 @@ function getActiveCount(filters: FilterState): number {
   );
 }
 
-function getFilteredAssets(filters: FilterState): Asset[] {
+function getFilteredAssets(assets: Asset[], filters: FilterState): Asset[] {
   const normalizedQuery = filters.query.trim().toLowerCase();
   return assets
     .filter((asset) => matchesQuery(asset, normalizedQuery))
@@ -173,6 +183,7 @@ function ChipList<T extends string>({
 }
 
 function FilterPanel({
+  assetCount,
   filters,
   resultCount,
   onQueryChange,
@@ -181,6 +192,7 @@ function FilterPanel({
   onToggleEquity,
   onToggleStatus,
 }: {
+  assetCount: number;
   filters: FilterState;
   resultCount: number;
   onQueryChange: (query: string) => void;
@@ -192,6 +204,7 @@ function FilterPanel({
   return (
     <section className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-[0_28px_80px_-64px_rgb(0_0_0/0.7)]">
       <SearchRow
+        assetCount={assetCount}
         query={filters.query}
         resultCount={resultCount}
         onQueryChange={onQueryChange}
@@ -227,10 +240,12 @@ function FilterPanel({
 }
 
 function SearchRow({
+  assetCount,
   query,
   resultCount,
   onQueryChange,
 }: {
+  assetCount: number;
   query: string;
   resultCount: number;
   onQueryChange: (query: string) => void;
@@ -249,7 +264,7 @@ function SearchRow({
       <div className="flex items-center justify-between gap-3 rounded-md bg-[var(--color-surface-2)] px-4 py-3 text-sm lg:w-56">
         <span className="text-[var(--color-muted)]">表示中</span>
         <span className="font-semibold text-[var(--color-text)]">
-          {resultCount} / {assets.length}
+          {resultCount} / {assetCount}
         </span>
       </div>
     </div>
@@ -282,7 +297,21 @@ function ResultSummary({
   );
 }
 
-function AssetGrid({ filtered, now }: { filtered: Asset[]; now?: Date }) {
+function AssetGrid({
+  canTrack,
+  filtered,
+  now,
+  onUserStatusChange,
+  savingAssetId,
+  stateByAssetId,
+}: {
+  canTrack: boolean;
+  filtered: Asset[];
+  now?: Date;
+  onUserStatusChange: (assetId: string, status: UserAssetStatus) => void;
+  savingAssetId?: string;
+  stateByAssetId: Record<string, UserAssetState>;
+}) {
   if (filtered.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-16 text-center text-sm text-[var(--color-muted)]">
@@ -294,13 +323,29 @@ function AssetGrid({ filtered, now }: { filtered: Asset[]; now?: Date }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {filtered.map((asset) => (
-        <AssetCard key={asset.id} asset={asset} now={now} />
+        <AssetCard
+          key={asset.id}
+          asset={asset}
+          canTrack={canTrack}
+          now={now}
+          onUserStatusChange={onUserStatusChange}
+          saving={savingAssetId === asset.id}
+          userState={stateByAssetId[asset.id]}
+        />
       ))}
     </div>
   );
 }
 
-export function Directory() {
+export function Directory({
+  assets,
+  initialStates,
+  user,
+}: {
+  assets: Asset[];
+  initialStates: UserAssetState[];
+  user: PublicUser | null;
+}) {
   const [filters, setFilters] = useState<FilterState>({
     query: "",
     assetTypes: [],
@@ -308,16 +353,28 @@ export function Directory() {
     equities: [],
     statuses: [],
   });
-  const filtered = useMemo(() => getFilteredAssets(filters), [filters]);
+  const [stateByAssetId, setStateByAssetId] = useState<
+    Record<string, UserAssetState>
+  >(() => statesToRecord(initialStates));
+  const [savingAssetId, setSavingAssetId] = useState<string | undefined>();
+  const [error, setError] = useState<string | undefined>();
+  const filtered = useMemo(
+    () => getFilteredAssets(assets, filters),
+    [assets, filters],
+  );
   const activeCount = getActiveCount(filters);
-
-  // 残日数(「あと◯日」)はクライアントのマウント後に算出し、SSRとの不一致を避ける。
   const [now, setNow] = useState<Date | undefined>(undefined);
+
   useEffect(() => setNow(new Date()), []);
+  useEffect(
+    () => setStateByAssetId(statesToRecord(initialStates)),
+    [initialStates, user?.id],
+  );
 
   return (
     <div className="space-y-6">
       <FilterPanel
+        assetCount={assets.length}
         filters={filters}
         resultCount={filtered.length}
         onQueryChange={(query) => setFilters((state) => ({ ...state, query }))}
@@ -358,7 +415,71 @@ export function Directory() {
           })
         }
       />
-      <AssetGrid filtered={filtered} now={now} />
+      {error && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
+      <AssetGrid
+        canTrack={Boolean(user)}
+        filtered={filtered}
+        now={now}
+        onUserStatusChange={(assetId, status) =>
+          saveUserStatus({
+            assetId,
+            setError,
+            setSavingAssetId,
+            setStateByAssetId,
+            status,
+          })
+        }
+        savingAssetId={savingAssetId}
+        stateByAssetId={stateByAssetId}
+      />
     </div>
   );
+}
+
+function statesToRecord(
+  states: UserAssetState[],
+): Record<string, UserAssetState> {
+  return Object.fromEntries(states.map((state) => [state.assetId, state]));
+}
+
+async function saveUserStatus({
+  assetId,
+  setError,
+  setSavingAssetId,
+  setStateByAssetId,
+  status,
+}: {
+  assetId: string;
+  setError: (message: string | undefined) => void;
+  setSavingAssetId: (assetId: string | undefined) => void;
+  setStateByAssetId: Dispatch<SetStateAction<Record<string, UserAssetState>>>;
+  status: UserAssetStatus;
+}) {
+  setError(undefined);
+  setSavingAssetId(assetId);
+  const response = await fetch("/api/me/asset-states", {
+    body: JSON.stringify({ assetId, status }),
+    headers: { "Content-Type": "application/json" },
+    method: "PUT",
+  });
+  const body = (await response.json().catch(() => ({}))) as {
+    error?: string;
+    state?: UserAssetState;
+  };
+  setSavingAssetId(undefined);
+  if (!response.ok || !body.state) {
+    setError(body.error ?? "状態の保存に失敗しました");
+    return;
+  }
+  setStateByAssetId((current) => {
+    if (body.state?.status === "not_started") {
+      const { [assetId]: _removed, ...rest } = current;
+      return rest;
+    }
+    return { ...current, [assetId]: body.state as UserAssetState };
+  });
 }

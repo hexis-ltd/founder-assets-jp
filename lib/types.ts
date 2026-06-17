@@ -65,6 +65,24 @@ export interface Asset {
   tags?: string[];
 }
 
+export const USER_ASSET_STATUS_VALUES = [
+  "not_started",
+  "interested",
+  "planned",
+  "applied",
+  "accepted",
+  "rejected",
+  "skipped",
+] as const;
+
+export type UserAssetStatus = (typeof USER_ASSET_STATUS_VALUES)[number];
+
+export interface UserAssetState {
+  assetId: string;
+  status: UserAssetStatus;
+  updatedAt: string;
+}
+
 // ---- ラベル定義（UI表示用） ----
 
 export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
@@ -100,6 +118,16 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   rolling: "通年募集",
   recurring: "定期募集",
   closed: "募集終了",
+};
+
+export const USER_ASSET_STATUS_LABELS: Record<UserAssetStatus, string> = {
+  not_started: "未対応",
+  interested: "気になる",
+  planned: "申請予定",
+  applied: "申請済み",
+  accepted: "採択",
+  rejected: "不採択",
+  skipped: "見送り",
 };
 
 // ---- 締切ソート / 表示ロジック ----

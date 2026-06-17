@@ -5,15 +5,19 @@
   "description": "日本のスタートアップ・起業家が使える支援アセットの横断データベース",
   "scripts": {
     "dev": "next dev",
+    "db:setup": "bun run scripts/setup-db.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "next": "15.3.9",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.11",
@@ -21,6 +25,7 @@
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
     "tailwindcss": "4.1.11",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "vitest": "^4.1.9"
   }
 }

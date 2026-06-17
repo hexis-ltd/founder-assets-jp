@@ -1,24 +1,16 @@
 import { Directory } from "@/components/Directory";
-import { assets } from "@/lib/data";
+import { AuthPanel } from "@/components/AuthPanel";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAssets, getUserAssetStates } from "@/lib/db/assets";
 
 const REPO_URL = "https://github.com/hexis-ltd/founder-assets-jp";
 
-const nonEquityCount = assets.filter((asset) => asset.equity === "none").length;
-const rollingCount = assets.filter(
-  (asset) => asset.application.status === "rolling",
-).length;
-const cloudCount = assets.filter((asset) =>
-  asset.assetTypes.includes("cloud-credit"),
-).length;
+export default async function Home() {
+  const assets = await getAssets();
+  const user = await getCurrentUser();
+  const userStates = user ? await getUserAssetStates(user.id) : [];
+  const stats = getStats(assets);
 
-const stats = [
-  { label: "掲載アセット", value: `${assets.length}` },
-  { label: "非エクイティ", value: `${nonEquityCount}` },
-  { label: "通年・随時", value: `${rollingCount}` },
-  { label: "クラウド特典", value: `${cloudCount}` },
-];
-
-export default function Home() {
   return (
     <main className="min-h-dvh">
       <header className="border-b border-[var(--color-border)] bg-[var(--color-bg)]/82 backdrop-blur">
@@ -44,6 +36,9 @@ export default function Home() {
               GitHub で貢献
             </a>
           </nav>
+        </div>
+        <div className="mx-auto flex max-w-7xl justify-end px-4 pb-4 sm:px-6">
+          <AuthPanel user={user} />
         </div>
       </header>
 
@@ -79,7 +74,7 @@ export default function Home() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
-        <Directory />
+        <Directory assets={assets} initialStates={userStates} user={user} />
       </section>
 
       <footer className="border-t border-[var(--color-border)] bg-[var(--color-surface)]">
@@ -107,4 +102,22 @@ export default function Home() {
       </footer>
     </main>
   );
+}
+
+function getStats(assets: Awaited<ReturnType<typeof getAssets>>) {
+  const nonEquityCount = assets.filter(
+    (asset) => asset.equity === "none",
+  ).length;
+  const rollingCount = assets.filter(
+    (asset) => asset.application.status === "rolling",
+  ).length;
+  const cloudCount = assets.filter((asset) =>
+    asset.assetTypes.includes("cloud-credit"),
+  ).length;
+  return [
+    { label: "掲載アセット", value: `${assets.length}` },
+    { label: "非エクイティ", value: `${nonEquityCount}` },
+    { label: "通年・随時", value: `${rollingCount}` },
+    { label: "クラウド特典", value: `${cloudCount}` },
+  ];
 }
