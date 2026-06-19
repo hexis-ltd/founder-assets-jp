@@ -2,6 +2,7 @@ import { Directory } from "@/components/Directory";
 import { AuthPanel } from "@/components/AuthPanel";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAssets, getUserAssetStates } from "@/lib/db/assets";
+import { LAST_CHECKED } from "@/lib/data";
 
 const REPO_URL = "https://github.com/hexis-ltd/founder-assets-jp";
 
@@ -40,26 +41,37 @@ export default async function Home() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="max-w-3xl">
-          <p className="text-xs font-medium text-[var(--color-muted)]">
-            Startup support directory
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight text-[var(--color-text)] sm:text-4xl">
-            起業家向け支援アセット
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs font-medium text-[var(--color-muted)]">
+            <span className="relative flex size-1.5">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-[var(--color-text)] opacity-40" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-[var(--color-text)]" />
+            </span>
+            {LAST_CHECKED}更新 · 日本の起業家向け
+          </div>
+          <h1 className="mt-5 text-balance text-4xl font-semibold leading-[1.08] tracking-tight text-[var(--color-text)] sm:text-5xl">
+            起業に使える支援を、
+            <br className="hidden sm:block" />
+            ひとつのリストに。
           </h1>
-          <p className="mt-3 text-sm leading-7 text-[var(--color-muted)] sm:text-base">
-            無料オフィス、クラウドクレジット、補助金、アクセラレーター、人材育成、海外展開まで。
-            日本のスタートアップ向け支援を、応募可否・フェーズ・エクイティで整理します。
+          <p className="mt-5 max-w-2xl text-pretty text-base leading-7 text-[var(--color-muted)]">
+            無料オフィス・クラウドクレジット・補助金・アクセラレーター・人材育成・海外展開——
+            日本の起業家が応募できる支援を、フェーズ・エクイティ・募集状況で横断検索できます。
           </p>
         </div>
-        <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-y border-[var(--color-border)] py-3 text-sm">
+        <dl className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="flex items-baseline gap-2">
-              <dt className="text-[var(--color-muted)]">{stat.label}</dt>
-              <dd className="font-medium text-[var(--color-text)]">
+            <div
+              key={stat.label}
+              className="bg-[var(--color-surface)] px-4 py-4 sm:px-5 sm:py-5"
+            >
+              <dd className="text-3xl font-semibold tabular-nums leading-none tracking-tight text-[var(--color-text)] sm:text-4xl">
                 {stat.value}
               </dd>
+              <dt className="mt-2 text-xs text-[var(--color-muted)]">
+                {stat.label}
+              </dt>
             </div>
           ))}
         </dl>
@@ -107,9 +119,9 @@ function getStats(assets: Awaited<ReturnType<typeof getAssets>>) {
     asset.assetTypes.includes("cloud-credit"),
   ).length;
   return [
-    { label: "掲載", value: `${assets.length}` },
+    { label: "掲載アセット", value: `${assets.length}` },
     { label: "非エクイティ", value: `${nonEquityCount}` },
-    { label: "通年", value: `${rollingCount}` },
-    { label: "クラウド", value: `${cloudCount}` },
+    { label: "通年募集", value: `${rollingCount}` },
+    { label: "クラウド支援", value: `${cloudCount}` },
   ];
 }
