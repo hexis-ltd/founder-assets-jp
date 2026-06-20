@@ -55,7 +55,7 @@ export function AssetCard({
   userState?: UserAssetState;
 }) {
   const status = getStatusDisplay(asset.application, now);
-  const profile = getAssetDecisionProfile(asset, now);
+  const profile = getAssetDecisionProfile(asset);
   const timing = getApplicationTiming(asset);
   const currentStatus = userState?.status ?? "not_started";
 

@@ -3,7 +3,6 @@ import {
   ASSET_TYPE_LABELS,
   STAGE_LABELS,
   type ScreeningEffort,
-  getStatusDisplay,
 } from "./types";
 
 export type DecisionItem = {
@@ -45,15 +44,10 @@ export function getApplicationTiming(asset: Asset): DecisionItem {
   return { label: "締切", value: app.window ?? app.note ?? "募集終了" };
 }
 
-export function getAssetDecisionProfile(
-  asset: Asset,
-  now?: Date,
-): AssetDecisionProfile {
-  const status = getStatusDisplay(asset.application, now);
+export function getAssetDecisionProfile(asset: Asset): AssetDecisionProfile {
   const effortLevel = getEffortLevel(asset);
   return {
     effort: [
-      { label: "申請", value: `${status.label} / ${status.detail}` },
       { label: "手間", value: effortLevel.detail },
       { label: "コスト", value: getEquityCostLabel(asset.equity) },
       ...optionalApplicationNotes(asset),
@@ -137,6 +131,12 @@ function getEffortLevel(asset: Asset): EffortLevel {
 
 function optionalApplicationNotes(asset: Asset): DecisionItem[] {
   return [
+    asset.screening?.effort.selectionSteps.length
+      ? {
+          label: "手続き",
+          value: asset.screening.effort.selectionSteps.join(" / "),
+        }
+      : undefined,
     asset.application.window
       ? { label: "募集周期", value: asset.application.window }
       : undefined,
