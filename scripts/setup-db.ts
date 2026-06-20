@@ -33,6 +33,12 @@ function validateOrThrow() {
 
 async function createSchema() {
   await sql`create extension if not exists pgcrypto`;
+  await createUserTables();
+  await createAssetTables();
+  await createIndexes();
+}
+
+async function createUserTables() {
   await sql`
     create table if not exists users (
       id uuid primary key default gen_random_uuid(),
@@ -57,6 +63,9 @@ async function createSchema() {
       created_at timestamptz not null default now()
     )
   `;
+}
+
+async function createAssetTables() {
   await sql`
     create table if not exists assets (
       id text primary key,
@@ -72,9 +81,14 @@ async function createSchema() {
       eligibility text,
       summary text not null,
       url text not null,
+      screening jsonb not null default '{}'::jsonb,
       tags jsonb not null default '[]'::jsonb,
       updated_at timestamptz not null default now()
     )
+  `;
+  await sql`
+    alter table assets
+    add column if not exists screening jsonb not null default '{}'::jsonb
   `;
   await sql`
     create table if not exists user_asset_states (
@@ -87,6 +101,9 @@ async function createSchema() {
       primary key (user_id, asset_id)
     )
   `;
+}
+
+async function createIndexes() {
   await sql`
     create index if not exists user_sessions_expires_at_idx
     on user_sessions (expires_at)
@@ -107,7 +124,7 @@ async function seedAssets() {
     await sql`
       insert into assets (
         id, name, name_en, operator, region, asset_types, stages, equity,
-        application, value, eligibility, summary, url, tags, updated_at
+        application, value, eligibility, summary, url, screening, tags, updated_at
       )
       values (
         ${asset.id},
@@ -123,6 +140,7 @@ async function seedAssets() {
         ${asset.eligibility ?? null},
         ${asset.summary},
         ${asset.url},
+        ${JSON.stringify(asset.screening)}::jsonb,
         ${JSON.stringify(asset.tags ?? [])}::jsonb,
         now()
       )
@@ -139,6 +157,7 @@ async function seedAssets() {
         eligibility = excluded.eligibility,
         summary = excluded.summary,
         url = excluded.url,
+        screening = excluded.screening,
         tags = excluded.tags,
         updated_at = now()
     `;

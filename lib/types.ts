@@ -57,6 +57,67 @@ export interface Application {
   note?: string; // 補足（年度・選定方法など）
 }
 
+export const SCREENING_EFFORT_VALUES = [
+  "low",
+  "medium",
+  "high",
+  "unknown",
+] as const;
+export type ScreeningEffort = (typeof SCREENING_EFFORT_VALUES)[number];
+
+export const SCREENING_RISK_VALUES = [
+  "low",
+  "medium",
+  "high",
+] as const;
+export type ScreeningRisk = (typeof SCREENING_RISK_VALUES)[number];
+
+export interface ScreeningSource {
+  checkedAt: string; // ISO日付。根拠URLを確認した日
+  label?: string;
+  note?: string;
+  url: string;
+}
+
+export interface ScreeningAmount {
+  label: string;
+  maxAmountJpy?: number;
+  original?: string;
+  repayable?: boolean;
+  subsidyRate?: string;
+}
+
+export interface AssetScreening {
+  lastCheckedAt: string;
+  sources: ScreeningSource[];
+  fit: {
+    summary: string;
+    stages: Stage[];
+    region?: string;
+    founderTypes: string[];
+    sectors: string[];
+    companyAge?: string;
+    locationRequirements: string[];
+  };
+  benefit: {
+    summary: string;
+    amount?: ScreeningAmount;
+    nonCash: string[];
+  };
+  effort: {
+    level: ScreeningEffort;
+    requiredDocuments: string[];
+    selectionSteps: string[];
+    timeCommitment: string;
+    costNote?: string;
+    reimbursementOnly?: boolean;
+  };
+  risk: {
+    level: ScreeningRisk;
+    notes: string[];
+  };
+}
+
 export interface Asset {
   id: string;
   name: string;
@@ -71,6 +132,7 @@ export interface Asset {
   eligibility?: string; // 対象者の条件
   summary: string;
   url: string;
+  screening?: AssetScreening; // founderが一次判断するための構造化情報
   tags?: string[];
 }
 

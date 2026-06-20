@@ -440,6 +440,12 @@ function getSearchText(asset: Asset): string {
     asset.eligibility ?? "",
     status.label,
     status.detail,
+    asset.screening?.fit.summary ?? "",
+    ...(asset.screening?.fit.founderTypes ?? []),
+    ...(asset.screening?.fit.sectors ?? []),
+    asset.screening?.benefit.summary ?? "",
+    ...(asset.screening?.effort.requiredDocuments ?? []),
+    ...(asset.screening?.risk.notes ?? []),
     ...(asset.tags ?? []),
   ]
     .join(" ")

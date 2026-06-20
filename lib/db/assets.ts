@@ -1,8 +1,10 @@
 import { assets as staticAssets } from "@/lib/data";
 import { getSql, requireSql } from "@/lib/db/client";
+import { withAssetScreening } from "@/lib/asset-screening";
 import {
   type Application,
   type Asset,
+  type AssetScreening,
   type AssetType,
   type Equity,
   type Stage,
@@ -24,6 +26,7 @@ type AssetRow = {
   eligibility: string | null;
   summary: string;
   url: string;
+  screening: unknown;
   tags: unknown;
 };
 
@@ -38,7 +41,7 @@ export async function getAssets(): Promise<Asset[]> {
   if (!sql) return staticAssets;
   const rows = (await sql`
     select id, name, name_en, operator, region, asset_types, stages, equity,
-      application, value, eligibility, summary, url, tags
+      application, value, eligibility, summary, url, screening, tags
     from assets
     order by name
   `) as AssetRow[];
@@ -93,7 +96,7 @@ async function deleteUserAssetState(
 }
 
 function rowToAsset(row: AssetRow): Asset {
-  return {
+  return withAssetScreening({
     id: row.id,
     name: row.name,
     nameEn: row.name_en ?? undefined,
@@ -107,8 +110,9 @@ function rowToAsset(row: AssetRow): Asset {
     eligibility: row.eligibility ?? undefined,
     summary: row.summary,
     url: row.url,
+    screening: asScreening(row.screening),
     tags: asArray<string>(row.tags),
-  };
+  });
 }
 
 function rowToState(row: StateRow): UserAssetState {
@@ -121,4 +125,9 @@ function rowToState(row: StateRow): UserAssetState {
 
 function asArray<T extends string>(value: unknown): T[] {
   return Array.isArray(value) ? (value.filter(Boolean) as T[]) : [];
+}
+
+function asScreening(value: unknown): AssetScreening | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  return "lastCheckedAt" in value ? (value as AssetScreening) : undefined;
 }

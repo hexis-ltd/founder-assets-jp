@@ -28,8 +28,7 @@ describe("asset export", () => {
   it("serializes assets to a JSON dataset with metadata", () => {
     const dataset = assetsToJsonDataset([asset], "2026年6月");
 
-    expect(dataset).toEqual({
-      assets: [asset],
+    expect(dataset).toMatchObject({
       coverage: expect.objectContaining({
         total: 1,
       }),
@@ -42,13 +41,28 @@ describe("asset export", () => {
         hasApplicationStatus: 1,
         hasOfficialUrl: 1,
         hasRegion: 1,
+        hasScreening: 1,
+        hasScreeningSources: 1,
+        hasStructuredAmount: 1,
         hasTags: 1,
       },
       schema: expect.objectContaining({
-        fields: expect.arrayContaining(["id", "name", "assetTypes", "url"]),
+        fields: expect.arrayContaining([
+          "id",
+          "name",
+          "assetTypes",
+          "screening",
+          "url",
+        ]),
         notes: expect.any(Array),
       }),
-      schemaVersion: 1,
+      schemaVersion: 2,
+    });
+    expect(dataset.assets[0]).toMatchObject({
+      ...asset,
+      screening: expect.objectContaining({
+        effort: expect.objectContaining({ level: "high" }),
+      }),
     });
   });
 
@@ -61,6 +75,8 @@ describe("asset export", () => {
     expect(row).toContain("grant-subsidy;mentoring");
     expect(row).toContain("upcoming");
     expect(row).toContain("2026-10-08");
+    expect(row).toContain("high");
+    expect(row).toContain("事業計画書");
   });
 
   it("escapes CSV fields that contain commas, quotes, or new lines", () => {

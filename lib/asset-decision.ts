@@ -2,6 +2,7 @@ import {
   type Asset,
   ASSET_TYPE_LABELS,
   STAGE_LABELS,
+  type ScreeningEffort,
   getStatusDisplay,
 } from "./types";
 
@@ -59,15 +60,23 @@ export function getAssetDecisionProfile(
     ],
     effortLevel,
     fit: [
-      { label: "対象", value: asset.eligibility ?? "公式サイトで要確認" },
+      {
+        label: "対象",
+        value: asset.screening?.fit.summary ?? asset.eligibility ?? "公式サイトで要確認",
+      },
       {
         label: "フェーズ",
-        value: asset.stages.map((stage) => STAGE_LABELS[stage]).join(" / "),
+        value: (asset.screening?.fit.stages ?? asset.stages)
+          .map((stage) => STAGE_LABELS[stage])
+          .join(" / "),
       },
-      { label: "地域", value: asset.region ?? "要確認" },
+      { label: "地域", value: asset.screening?.fit.region ?? asset.region ?? "要確認" },
     ],
     return: [
-      { label: "リターン", value: asset.value ?? asset.summary },
+      {
+        label: "リターン",
+        value: asset.screening?.benefit.summary ?? asset.value ?? asset.summary,
+      },
       {
         label: "支援内容",
         value: asset.assetTypes.map((type) => ASSET_TYPE_LABELS[type]).join(" / "),
@@ -89,6 +98,8 @@ function formatDate(iso: string): string {
 }
 
 function getEffortLevel(asset: Asset): EffortLevel {
+  const level = asset.screening?.effort.level;
+  if (level) return toEffortLevel(level, asset.screening?.effort.timeCommitment);
   if (asset.assetTypes.some((type) => type === "cloud-credit")) {
     return {
       detail: "比較的軽い。オンライン申請で完結することが多い",
@@ -132,5 +143,31 @@ function optionalApplicationNotes(asset: Asset): DecisionItem[] {
     asset.application.note
       ? { label: "注意", value: asset.application.note }
       : undefined,
+    asset.screening?.effort.requiredDocuments.length
+      ? {
+          label: "必要書類",
+          value: asset.screening.effort.requiredDocuments.join(" / "),
+        }
+      : undefined,
+    asset.screening?.risk.notes.length
+      ? { label: "リスク", value: asset.screening.risk.notes.join(" / ") }
+      : undefined,
   ].filter((item): item is DecisionItem => Boolean(item));
+}
+
+function toEffortLevel(
+  level: ScreeningEffort,
+  timeCommitment?: string,
+): EffortLevel {
+  const suffix = timeCommitment ? `。目安: ${timeCommitment}` : "";
+  if (level === "low") {
+    return { detail: `比較的軽い${suffix}`, label: "軽い", tone: "low" };
+  }
+  if (level === "medium") {
+    return { detail: `中程度${suffix}`, label: "中", tone: "medium" };
+  }
+  if (level === "high") {
+    return { detail: `重い${suffix}`, label: "重い", tone: "high" };
+  }
+  return { detail: `制度ごとの差が大きい${suffix}`, label: "要確認", tone: "unknown" };
 }

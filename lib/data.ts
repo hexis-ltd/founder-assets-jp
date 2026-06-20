@@ -1,4 +1,5 @@
 import type { Asset } from "./types";
+import { withAssetScreening } from "./asset-screening";
 
 // 日本の起業家・スタートアップが使える支援アセットのキュレーション済みデータ。
 //
@@ -8,9 +9,9 @@ import type { Asset } from "./types";
 // データの追加・修正は GitHub への Pull Request を歓迎します。
 
 // 掲載情報の最終確認時点（UIに表示）
-export const LAST_CHECKED = "2026年6月";
+export const LAST_CHECKED = "2026年6月21日";
 
-export const assets: Asset[] = [
+const assetSeeds: Asset[] = [
   // ===================================================================
   // 無料オフィス・インキュベーション
   // ===================================================================
@@ -1122,7 +1123,7 @@ export const assets: Asset[] = [
     eligibility: "都内で創業予定/創業初期かつ一定要件を満たす者",
     summary:
       "都内の創業初期に必要な経費（人件費・賃借料・広告費等）の一部を助成。TOKYO創業ステーション等の支援を受けていることが要件になる場合がある。",
-    url: "https://startup-station.jp/m/sogyojosei/",
+    url: "https://startup-station.jp/m2/services/sogyokassei/",
     tags: ["東京都", "助成金"],
   },
   {
@@ -1271,14 +1272,13 @@ export const assets: Asset[] = [
     equity: "none",
     application: {
       status: "upcoming",
-      opensAt: "2026-07-01",
-      window: "公募回ごと（2026年7月上旬〜下旬に第7回申請受付予定）",
+      window: "第7回は2026年6月5日公募開始、申請受付は2026年7月上旬予定、締切は7月下旬予定",
     },
     value: "人手不足対応・自動化/省力化投資の補助",
     eligibility: "人手不足解消に資する設備・システム投資を行う中小企業等",
     summary:
       "IoT、ロボット、設備、システムなどによる省力化投資を支援する補助金。オペレーション改善や労働集約的業務の自動化に取り組むスタートアップにも検討余地がある。",
-    url: "https://www.chusho.meti.go.jp/koukai/hojyokin/index.html",
+    url: "https://shoryokuka.smrj.go.jp/ippan/",
     tags: ["補助金", "省力化", "自動化"],
   },
   {
@@ -1300,7 +1300,7 @@ export const assets: Asset[] = [
     eligibility: "創業後間もない小規模事業者（創業支援等事業の修了要件あり）",
     summary:
       "創業直後の小規模事業者による販路開拓、広報、EC、店舗改装、業務効率化などを支援する補助金。スタートアップというよりスモールビジネス寄りだが、創業初期の資金繰りに有用。",
-    url: "https://www.chusho.meti.go.jp/koukai/hojyokin/index.html",
+    url: "https://r6.jizokukahojokin.info/sogyo/",
     tags: ["補助金", "創業型", "販路開拓"],
   },
   {
@@ -2146,3 +2146,5 @@ export const assets: Asset[] = [
     tags: ["クラウド", "クレジット"],
   },
 ];
+
+export const assets: Asset[] = assetSeeds.map(withAssetScreening);

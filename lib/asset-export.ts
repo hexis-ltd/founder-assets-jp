@@ -1,4 +1,5 @@
 import type { Asset } from "./types";
+import { withAssetScreening } from "./asset-screening";
 import { type DataCoverage, getDataCoverage } from "./data-coverage";
 
 export type AssetJsonDataset = {
@@ -11,13 +12,16 @@ export type AssetJsonDataset = {
   license: "MIT";
   quality: AssetDatasetQuality;
   schema: AssetDatasetSchema;
-  schemaVersion: 1;
+  schemaVersion: 2;
 };
 
 export type AssetDatasetQuality = {
   hasApplicationStatus: number;
   hasOfficialUrl: number;
   hasRegion: number;
+  hasScreening: number;
+  hasScreeningSources: number;
+  hasStructuredAmount: number;
   hasTags: number;
 };
 
@@ -44,6 +48,15 @@ export const assetCsvHeaders = [
   "eligibility",
   "summary",
   "url",
+  "screeningLastCheckedAt",
+  "screeningSources",
+  "screeningBenefitAmount",
+  "screeningBenefitMaxAmountJpy",
+  "screeningEffortLevel",
+  "screeningRequiredDocuments",
+  "screeningSelectionSteps",
+  "screeningRiskLevel",
+  "screeningRiskNotes",
   "tags",
 ] as const;
 
@@ -51,15 +64,16 @@ export function assetsToJsonDataset(
   assets: Asset[],
   lastChecked: string,
 ): AssetJsonDataset {
+  const screenedAssets = assets.map(withAssetScreening);
   return {
-    assets,
-    coverage: getDataCoverage(assets),
-    count: assets.length,
+    assets: screenedAssets,
+    coverage: getDataCoverage(screenedAssets),
+    count: screenedAssets.length,
     generatedAt: new Date().toISOString(),
     homepage: "https://github.com/hexis-ltd/founder-assets-jp",
     lastChecked,
     license: "MIT",
-    quality: getDatasetQuality(assets),
+    quality: getDatasetQuality(screenedAssets),
     schema: {
       fields: [
         "id",
@@ -75,22 +89,25 @@ export function assetsToJsonDataset(
         "eligibility",
         "summary",
         "url",
+        "screening",
         "tags",
       ],
       notes: [
         "application.status は open/upcoming/rolling/recurring/closed のいずれかです。",
         "deadline と opensAt は確定日が裏取りできた場合のみ YYYY-MM-DD で入ります。",
         "assetTypes、stages、tags は配列です。CSVではセミコロン区切りで出力します。",
+        "screening は founder の一次判断に使う fit/benefit/effort/risk/source 情報です。",
         "金額・募集時期・応募条件は変動するため、最終確認は各公式URLで行ってください。",
       ],
     },
-    schemaVersion: 1,
+    schemaVersion: 2,
   };
 }
 
 export function assetsToCsv(assets: Asset[]): string {
-  const rows = assets.map((asset) =>
-    [
+  const rows = assets.map(withAssetScreening).map((asset) => {
+    const screening = asset.screening;
+    return [
       asset.id,
       asset.name,
       asset.nameEn ?? "",
@@ -108,11 +125,20 @@ export function assetsToCsv(assets: Asset[]): string {
       asset.eligibility ?? "",
       asset.summary,
       asset.url,
+      screening?.lastCheckedAt ?? "",
+      (screening?.sources ?? []).map((source) => source.url).join(";"),
+      screening?.benefit.amount?.label ?? "",
+      screening?.benefit.amount?.maxAmountJpy?.toString() ?? "",
+      screening?.effort.level ?? "",
+      joinList(screening?.effort.requiredDocuments),
+      joinList(screening?.effort.selectionSteps),
+      screening?.risk.level ?? "",
+      joinList(screening?.risk.notes),
       (asset.tags ?? []).join(";"),
     ]
       .map(escapeCsvField)
-      .join(","),
-  );
+      .join(",");
+  });
   return [assetCsvHeaders.join(","), ...rows].join("\n");
 }
 
@@ -128,6 +154,17 @@ function getDatasetQuality(assets: Asset[]): AssetDatasetQuality {
     hasOfficialUrl: assets.filter((asset) => asset.url.startsWith("http"))
       .length,
     hasRegion: assets.filter((asset) => Boolean(asset.region)).length,
+    hasScreening: assets.filter((asset) => Boolean(asset.screening)).length,
+    hasScreeningSources: assets.filter(
+      (asset) => (asset.screening?.sources ?? []).length > 0,
+    ).length,
+    hasStructuredAmount: assets.filter(
+      (asset) => Boolean(asset.screening?.benefit.amount),
+    ).length,
     hasTags: assets.filter((asset) => (asset.tags ?? []).length > 0).length,
   };
+}
+
+function joinList(values?: string[]): string {
+  return values?.join(";") ?? "";
 }
