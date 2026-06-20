@@ -20,8 +20,33 @@ export type AssetDecisionProfile = {
   effort: DecisionItem[];
   effortLevel: EffortLevel;
   fit: DecisionItem[];
+  notes: string[];
   return: DecisionItem[];
 };
+
+const GENERIC_RISK_NOTE = "募集条件・締切・金額は公式サイトで最終確認";
+
+const PREPARATION_LABELS: [string, string][] = [
+  ["経費見積・資金計画", "経費見積"],
+  ["登記・本人確認・納税等の証憑", "証憑"],
+  ["オンライン申請フォーム", "申請フォーム"],
+  ["電子申請フォーム", "申請フォーム"],
+  ["会社/プロダクト情報", "会社情報"],
+  ["パートナー紹介情報", "紹介情報"],
+  ["プロダクト/事業概要", "事業概要"],
+  ["チーム/資本政策資料", "資本政策"],
+];
+
+const FLOW_LABELS: [string, string][] = [
+  ["採択/交付審査", "交付審査"],
+  ["実績報告・精算", "精算"],
+  ["必要に応じて面談", "面談"],
+  ["採択後プログラム参加", "参加"],
+  ["オンライン申請", "申請"],
+  ["申込/登録", "申込"],
+  ["資格確認", "確認"],
+  ["クレジット付与", "付与"],
+];
 
 export function getApplicationTiming(asset: Asset): DecisionItem {
   const app = asset.application;
@@ -47,11 +72,7 @@ export function getApplicationTiming(asset: Asset): DecisionItem {
 export function getAssetDecisionProfile(asset: Asset): AssetDecisionProfile {
   const effortLevel = getEffortLevel(asset);
   return {
-    effort: [
-      { label: "手間", value: effortLevel.detail },
-      { label: "コスト", value: getEquityCostLabel(asset.equity) },
-      ...optionalApplicationNotes(asset),
-    ],
+    effort: getEffortItems(asset, effortLevel),
     effortLevel,
     fit: [
       {
@@ -76,13 +97,8 @@ export function getAssetDecisionProfile(asset: Asset): AssetDecisionProfile {
         value: asset.assetTypes.map((type) => ASSET_TYPE_LABELS[type]).join(" / "),
       },
     ],
+    notes: getNotes(asset),
   };
-}
-
-function getEquityCostLabel(equity: Asset["equity"]): string {
-  if (equity === "none") return "株式取得なし";
-  if (equity === "optional") return "株式取得の可能性あり";
-  return "株式取得あり";
 }
 
 function formatDate(iso: string): string {
@@ -129,30 +145,65 @@ function getEffortLevel(asset: Asset): EffortLevel {
   };
 }
 
-function optionalApplicationNotes(asset: Asset): DecisionItem[] {
+function getEffortItems(
+  asset: Asset,
+  effortLevel: EffortLevel,
+): DecisionItem[] {
   return [
-    asset.screening?.effort.selectionSteps.length
-      ? {
-          label: "手続き",
-          value: asset.screening.effort.selectionSteps.join(" / "),
-        }
-      : undefined,
-    asset.application.window
-      ? { label: "募集周期", value: asset.application.window }
-      : undefined,
-    asset.application.note
-      ? { label: "注意", value: asset.application.note }
-      : undefined,
-    asset.screening?.effort.requiredDocuments.length
-      ? {
-          label: "必要書類",
-          value: asset.screening.effort.requiredDocuments.join(" / "),
-        }
-      : undefined,
-    asset.screening?.risk.notes.length
-      ? { label: "リスク", value: asset.screening.risk.notes.join(" / ") }
-      : undefined,
-  ].filter((item): item is DecisionItem => Boolean(item));
+    { label: "手間", value: effortLevel.detail },
+    { label: "準備", value: getPreparationLabel(asset) },
+    { label: "流れ", value: getFlowLabel(asset) },
+  ];
+}
+
+function getPreparationLabel(asset: Asset): string {
+  const docs = asset.screening?.effort.requiredDocuments ?? inferRequiredDocuments(asset);
+  return compactList(docs.map(compactPreparation), " / ");
+}
+
+function getFlowLabel(asset: Asset): string {
+  const steps = asset.screening?.effort.selectionSteps ?? inferSelectionSteps(asset);
+  return compactList(steps.map(compactFlow), " → ");
+}
+
+function getNotes(asset: Asset): string[] {
+  return unique([
+    asset.application.note,
+    asset.screening?.effort.costNote,
+    ...(asset.screening?.risk.notes ?? []).filter(
+      (note) => note !== GENERIC_RISK_NOTE,
+    ),
+  ]);
+}
+
+function inferRequiredDocuments(asset: Asset): string[] {
+  if (asset.assetTypes.includes("cloud-credit")) {
+    return ["申請フォーム", "会社情報"];
+  }
+  if (asset.assetTypes.some((type) => type === "grant-subsidy" || type === "funding")) {
+    return ["事業計画書", "経費見積", "証憑"];
+  }
+  if (asset.assetTypes.some((type) => type === "accelerator" || type === "equity-investment")) {
+    return ["ピッチ資料", "事業計画", "チーム資料"];
+  }
+  return ["申請フォーム", "活動内容"];
+}
+
+function inferSelectionSteps(asset: Asset): string[] {
+  if (asset.assetTypes.includes("cloud-credit")) {
+    return ["申請", "確認", "付与"];
+  }
+  if (asset.assetTypes.includes("grant-subsidy")) {
+    return ["電子申請", "審査", "交付", "精算"];
+  }
+  if (asset.assetTypes.includes("funding")) return ["申込", "面談", "審査", "契約"];
+  if (asset.assetTypes.includes("equity-investment")) {
+    return ["応募/紹介", "面談", "投資審査", "条件交渉"];
+  }
+  if (asset.assetTypes.includes("accelerator")) {
+    return ["応募", "審査", "面談/ピッチ", "参加"];
+  }
+  return ["申込", "確認", "利用開始"];
 }
 
 function toEffortLevel(
@@ -170,4 +221,25 @@ function toEffortLevel(
     return { detail: `重い${suffix}`, label: "重い", tone: "high" };
   }
   return { detail: `制度ごとの差が大きい${suffix}`, label: "要確認", tone: "unknown" };
+}
+
+function compactPreparation(value: string): string {
+  return compactWith(PREPARATION_LABELS, value);
+}
+
+function compactFlow(value: string): string {
+  return compactWith(FLOW_LABELS, value);
+}
+
+function compactWith(labels: [string, string][], value: string): string {
+  return labels.find(([needle]) => value.includes(needle))?.[1] ?? value;
+}
+
+function compactList(values: string[], separator: string): string {
+  const items = unique(values).slice(0, 3);
+  return items.join(separator);
+}
+
+function unique(values: (string | undefined)[]): string[] {
+  return [...new Set(values.filter((value): value is string => Boolean(value)))];
 }

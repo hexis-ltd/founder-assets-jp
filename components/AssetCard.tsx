@@ -103,9 +103,16 @@ export function AssetCard({
 
       <div className="grid gap-4 border-t border-[var(--color-border)] pt-4 md:grid-cols-3">
         <DecisionSection items={profile.fit} title="自分が使えるか" />
-        <DecisionSection items={profile.effort} title="手間とコスト" />
+        <DecisionSection items={profile.effort} title="手間と準備" />
         <DecisionSection items={profile.return} title="リターン" />
       </div>
+
+      {profile.notes.length > 0 ? (
+        <p className="border-t border-[var(--color-border)] pt-3 text-[11px] leading-relaxed text-[var(--color-muted)]">
+          <span className="font-semibold text-[var(--color-text)]">注意</span>
+          <span className="ml-2">{profile.notes.join(" / ")}</span>
+        </p>
+      ) : null}
 
       <div className="flex flex-col gap-3 border-t border-[var(--color-border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
         {asset.tags && asset.tags.length > 0 ? (

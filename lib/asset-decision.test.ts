@@ -35,8 +35,12 @@ describe("asset decision profile", () => {
       "地域",
     ]);
     expect(profile.effortLevel.label).toBe("重い");
-    expect(profile.effort.map((item) => item.label)).not.toContain("申請");
-    expect(profile.effort.map((item) => item.label)).toContain("コスト");
+    expect(profile.effort.map((item) => item.label)).toEqual([
+      "手間",
+      "準備",
+      "流れ",
+    ]);
+    expect(profile.notes).toContain("事業計画書が必要");
     expect(profile.return[0]).toEqual({
       label: "リターン",
       value: "上限400万円",
@@ -87,19 +91,23 @@ describe("asset decision profile", () => {
       },
     });
 
-    expect(profile.effort).toContainEqual({
-      label: "手続き",
-      value: "電子申請 / 書類審査 / 面接審査",
-    });
+    expect(profile.effort).toEqual([
+      { label: "手間", value: "重い。目安: 数日〜数週間" },
+      { label: "準備", value: "事業計画書 / 経費見積" },
+      { label: "流れ", value: "電子申請 → 書類審査 → 面接審査" },
+    ]);
     expect(profile.effort.map((item) => item.value).join(" ")).not.toContain(
       "2026/9/29",
     );
     expect(profile.effort.map((item) => item.value).join(" ")).not.toContain(
       "2026/10/8",
     );
+    expect(profile.effort.map((item) => item.label)).not.toContain("募集周期");
+    expect(profile.effort.map((item) => item.label)).not.toContain("リスク");
+    expect(profile.notes).toEqual(["後払い精算あり"]);
   });
 
-  it("marks cloud credits as lighter effort and keeps equity cost visible", () => {
+  it("marks cloud credits as lighter effort without repeating equity cost", () => {
     const profile = getAssetDecisionProfile({
       ...baseAsset,
       assetTypes: ["cloud-credit"],
@@ -109,10 +117,7 @@ describe("asset decision profile", () => {
     });
 
     expect(profile.effortLevel.label).toBe("軽い");
-    expect(profile.effort).toContainEqual({
-      label: "コスト",
-      value: "株式取得なし",
-    });
+    expect(profile.effort.map((item) => item.label)).not.toContain("コスト");
     expect(profile.return[0]?.value).toContain("クラウドクレジット");
   });
 
