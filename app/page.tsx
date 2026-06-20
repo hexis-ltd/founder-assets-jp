@@ -2,7 +2,7 @@ import { Directory } from "@/components/Directory";
 import { AuthPanel } from "@/components/AuthPanel";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAssets, getUserAssetStates } from "@/lib/db/assets";
-import { LAST_CHECKED } from "@/lib/data";
+import Link from "next/link";
 
 const REPO_URL = "https://github.com/hexis-ltd/founder-assets-jp";
 
@@ -10,15 +10,14 @@ export default async function Home() {
   const assets = await getAssets();
   const user = await getCurrentUser();
   const userStates = user ? await getUserAssetStates(user.id) : [];
-  const stats = getStats(assets);
 
   return (
     <main className="min-h-dvh">
       <header className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <a href="/" className="text-sm font-semibold tracking-tight">
+          <Link href="/" className="text-sm font-semibold tracking-tight">
             Founder Assets JP
-          </a>
+          </Link>
           <nav className="flex items-center gap-2">
             <a
               href="https://hexis.ltd"
@@ -41,43 +40,7 @@ export default async function Home() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-        <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs font-medium text-[var(--color-muted)]">
-            <span className="relative flex size-1.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-[var(--color-text)] opacity-40" />
-              <span className="relative inline-flex size-1.5 rounded-full bg-[var(--color-text)]" />
-            </span>
-            {LAST_CHECKED}更新 · 日本の起業家向け
-          </div>
-          <h1 className="mt-5 text-balance text-4xl font-semibold leading-[1.08] tracking-tight text-[var(--color-text)] sm:text-5xl">
-            起業に使える支援を、
-            <br className="hidden sm:block" />
-            ひとつのリストに。
-          </h1>
-          <p className="mt-5 max-w-2xl text-pretty text-base leading-7 text-[var(--color-muted)]">
-            無料オフィス・クラウドクレジット・補助金・アクセラレーター・人材育成・海外展開——
-            日本の起業家が応募できる支援を、フェーズ・エクイティ・募集状況で横断検索できます。
-          </p>
-        </div>
-        <dl className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-4">
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="bg-[var(--color-surface)] px-4 py-4 sm:px-5 sm:py-5"
-            >
-              <dd className="text-3xl font-semibold tabular-nums leading-none tracking-tight text-[var(--color-text)] sm:text-4xl">
-                {stat.value}
-              </dd>
-              <dt className="mt-2 text-xs text-[var(--color-muted)]">
-                {stat.label}
-              </dt>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
+      <section id="directory" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         <Directory assets={assets} initialStates={userStates} user={user} />
       </section>
 
@@ -106,22 +69,4 @@ export default async function Home() {
       </footer>
     </main>
   );
-}
-
-function getStats(assets: Awaited<ReturnType<typeof getAssets>>) {
-  const nonEquityCount = assets.filter(
-    (asset) => asset.equity === "none",
-  ).length;
-  const rollingCount = assets.filter(
-    (asset) => asset.application.status === "rolling",
-  ).length;
-  const cloudCount = assets.filter((asset) =>
-    asset.assetTypes.includes("cloud-credit"),
-  ).length;
-  return [
-    { label: "掲載アセット", value: `${assets.length}` },
-    { label: "非エクイティ", value: `${nonEquityCount}` },
-    { label: "通年募集", value: `${rollingCount}` },
-    { label: "クラウド支援", value: `${cloudCount}` },
-  ];
 }

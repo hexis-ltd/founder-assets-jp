@@ -3,49 +3,41 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type Dispatch,
-  type ReactNode,
   type SetStateAction,
 } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AssetCard } from "@/components/AssetCard";
 import type { PublicUser } from "@/lib/auth/session";
-import { LAST_CHECKED } from "@/lib/data";
 import {
-  type ApplicationStatus,
-  type Asset,
-  type AssetType,
-  type Equity,
-  type Stage,
-  type UserAssetState,
-  type UserAssetStatus,
+  type ChipOption,
+  type FilterState,
+  createEmptyFilters,
+  filtersFromSearchParams,
+  filtersToSearchParams,
+  getActiveCount,
+  getFilteredAssets,
+  getRegionOptions,
+  toggleValue,
+} from "@/lib/directory-utils";
+import {
   ASSET_TYPE_LABELS,
   EQUITY_LABELS,
   STAGE_LABELS,
   STATUS_LABELS,
-  compareByDeadline,
-  getStatusDisplay,
+  type Asset,
+  type AssetType,
+  type ApplicationStatus,
+  type Equity,
+  type Stage,
+  type UserAssetState,
+  type UserAssetStatus,
 } from "@/lib/types";
 
-type FilterState = {
-  query: string;
-  assetTypes: AssetType[];
-  stages: Stage[];
-  equities: Equity[];
-  statuses: ApplicationStatus[];
-};
-
-type ViewMode = "all" | "saved" | "untracked";
-
-type ChipOption<T extends string> = {
-  label: string;
-  value: T;
-};
-
 const assetTypeOptions = toOptions(ASSET_TYPE_LABELS);
-const stageOptions = toOptions(STAGE_LABELS).filter(
-  (option) => option.value !== "any",
-);
+const stageOptions = toOptions(STAGE_LABELS);
 const equityOptions = toOptions(EQUITY_LABELS);
 const statusOptions = toOptions(STATUS_LABELS);
 
@@ -53,347 +45,295 @@ function toOptions<T extends string>(
   labels: Record<T, string>,
 ): ChipOption<T>[] {
   return Object.entries(labels).map(([value, label]) => ({
-    value: value as T,
     label: label as string,
+    value: value as T,
   }));
 }
 
-function toggleValue<T extends string>(values: T[], value: T): T[] {
-  return values.includes(value)
-    ? values.filter((item) => item !== value)
-    : [...values, value];
-}
+type FilterMenuId =
+  | "assetTypes"
+  | "equities"
+  | "regions"
+  | "stages"
+  | "statuses";
 
-function getActiveCount(filters: FilterState): number {
-  return (
-    filters.assetTypes.length +
-    filters.stages.length +
-    filters.equities.length +
-    filters.statuses.length +
-    (filters.query.trim() ? 1 : 0)
-  );
-}
-
-function getFilteredAssets(assets: Asset[], filters: FilterState): Asset[] {
-  const normalizedQuery = filters.query.trim().toLowerCase();
-  return assets
-    .filter((asset) => matchesQuery(asset, normalizedQuery))
-    .filter((asset) => matchesAssetTypes(asset, filters.assetTypes))
-    .filter((asset) => matchesStages(asset, filters.stages))
-    .filter((asset) => matchesEquities(asset, filters.equities))
-    .filter((asset) => matchesStatuses(asset, filters.statuses))
-    .toSorted(compareByDeadline);
-}
-
-function getVisibleAssets({
-  assets,
-  filters,
-  stateByAssetId,
-  viewMode,
-}: {
-  assets: Asset[];
-  filters: FilterState;
-  stateByAssetId: Record<string, UserAssetState>;
-  viewMode: ViewMode;
-}): Asset[] {
-  return getFilteredAssets(assets, filters).filter((asset) =>
-    matchesViewMode(asset, stateByAssetId, viewMode),
-  );
-}
-
-function matchesViewMode(
-  asset: Asset,
-  stateByAssetId: Record<string, UserAssetState>,
-  viewMode: ViewMode,
-): boolean {
-  if (viewMode === "all") return true;
-  const tracked = Boolean(stateByAssetId[asset.id]);
-  return viewMode === "saved" ? tracked : !tracked;
-}
-
-function matchesQuery(asset: Asset, query: string): boolean {
-  if (!query) return true;
-  return getSearchText(asset).includes(query);
-}
-
-function getSearchText(asset: Asset): string {
-  const status = getStatusDisplay(asset.application);
-  return [
-    asset.name,
-    asset.nameEn ?? "",
-    asset.operator,
-    asset.summary,
-    asset.value ?? "",
-    asset.eligibility ?? "",
-    status.label,
-    status.detail,
-    ...(asset.tags ?? []),
-  ]
-    .join(" ")
-    .toLowerCase();
-}
-
-function matchesAssetTypes(asset: Asset, selected: AssetType[]): boolean {
-  return selected.length === 0
-    ? true
-    : asset.assetTypes.some((type) => selected.includes(type));
-}
-
-function matchesStages(asset: Asset, selected: Stage[]): boolean {
-  return selected.length === 0
-    ? true
-    : asset.stages.some((stage) => selected.includes(stage) || stage === "any");
-}
-
-function matchesEquities(asset: Asset, selected: Equity[]): boolean {
-  return selected.length === 0 ? true : selected.includes(asset.equity);
-}
-
-function matchesStatuses(asset: Asset, selected: ApplicationStatus[]): boolean {
-  return selected.length === 0
-    ? true
-    : selected.includes(asset.application.status);
-}
-
-function Chip({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  children: ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex h-8 shrink-0 items-center rounded-md border px-2.5 text-xs font-medium transition-colors ${
-        active
-          ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
-          : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-text)]/25 hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function ChipList<T extends string>({
+function FilterMenu<T extends string>({
+  activeMenu,
+  align = "left",
+  id,
   label,
+  onToggle,
+  onToggleMenu,
   options,
   selected,
-  onToggle,
 }: {
+  activeMenu: FilterMenuId | undefined;
+  align?: "left" | "right";
+  id: FilterMenuId;
   label: string;
+  onToggle: (value: T) => void;
+  onToggleMenu: (id: FilterMenuId) => void;
   options: ChipOption<T>[];
   selected: T[];
-  onToggle: (value: T) => void;
 }) {
+  const open = activeMenu === id;
+  const summary = getFilterSummary(options, selected);
   return (
-    <div className="min-w-0 space-y-2">
-      <div className="text-[11px] font-semibold uppercase text-[var(--color-muted)]">
-        {label}
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {options.map((option) => (
-          <Chip
-            key={option.value}
-            active={selected.includes(option.value)}
-            onClick={() => onToggle(option.value)}
-          >
-            {option.label}
-          </Chip>
-        ))}
-      </div>
+    <div className="relative">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label={`${label}: ${summary || "すべて"}`}
+        onClick={() => onToggleMenu(id)}
+        className={`inline-flex h-9 max-w-full items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors ${
+          open
+            ? "border-[var(--color-text)] bg-[var(--color-bg)] text-[var(--color-text)]"
+            : selected.length > 0
+              ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
+              : "border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-muted)] hover:text-[var(--color-text)]"
+        }`}
+      >
+        <span className="shrink-0 opacity-70">{label}</span>
+        <span className="h-1 w-1 shrink-0 rounded-full bg-current opacity-30" />
+        <span className="truncate">{summary || "すべて"}</span>
+      </button>
+      {open && (
+        <div
+          className={`absolute z-20 mt-2 w-64 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-xl shadow-black/10 ${
+            align === "right" ? "right-0" : "left-0"
+          }`}
+          role="listbox"
+          aria-label={label}
+        >
+          <div className="px-2 py-1.5 text-[11px] font-semibold text-[var(--color-muted)]">
+            {label}
+          </div>
+          <div className="max-h-64 overflow-auto">
+            {options.map((option) => {
+              const checked = selected.includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={checked}
+                  onClick={() => onToggle(option.value)}
+                  className={`flex min-h-9 w-full items-center justify-between gap-3 rounded-lg px-2 text-left text-xs transition-colors ${
+                    checked
+                      ? "bg-[var(--color-muted-soft)] text-[var(--color-text)]"
+                      : "text-[var(--color-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]"
+                  }`}
+                >
+                  <span>{option.label}</span>
+                  {checked && <span className="text-[10px]">選択中</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function getFilterSummary<T extends string>(
+  options: ChipOption<T>[],
+  selected: T[],
+): string {
+  if (selected.length === 0) return "";
+  const labels = options
+    .filter((option) => selected.includes(option.value))
+    .map((option) => option.label);
+  if (labels.length <= 2) return labels.join("、");
+  return `${labels[0]} ほか${labels.length - 1}`;
 }
 
 function FilterPanel({
-  canTrack,
-  embedded = false,
   filters,
-  savedCount,
-  untrackedCount,
-  viewMode,
-  onViewModeChange,
-  onToggleAssetType,
-  onToggleStage,
-  onToggleEquity,
-  onToggleStatus,
+  regionOptions,
+  onFiltersChange,
 }: {
-  canTrack: boolean;
-  embedded?: boolean;
   filters: FilterState;
-  savedCount: number;
-  untrackedCount: number;
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
-  onToggleAssetType: (value: AssetType) => void;
-  onToggleStage: (value: Stage) => void;
-  onToggleEquity: (value: Equity) => void;
-  onToggleStatus: (value: ApplicationStatus) => void;
+  regionOptions: ChipOption<string>[];
+  onFiltersChange: (filters: FilterState) => void;
 }) {
+  const [activeMenu, setActiveMenu] = useState<FilterMenuId | undefined>();
+  const menuRootRef = useRef<HTMLDivElement>(null);
+  const toggleMenu = (id: FilterMenuId) =>
+    setActiveMenu((current) => (current === id ? undefined : id));
+  useEffect(() => {
+    if (!activeMenu) return undefined;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (menuRootRef.current?.contains(event.target as Node)) return;
+      setActiveMenu(undefined);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [activeMenu]);
   return (
-    <aside
-      className={
-        embedded
-          ? "p-0"
-          : "rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
-      }
+    <div
+      ref={menuRootRef}
+      className="flex flex-wrap gap-2"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") setActiveMenu(undefined);
+      }}
     >
-      {!embedded && (
-        <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-[var(--color-text)]">
-          Filters
-        </h2>
-        <span className="text-xs text-[var(--color-muted)]">
-          {getActiveCount(filters)} active
-        </span>
-      </div>
-      )}
-      <ViewTabs
-        canTrack={canTrack}
-        savedCount={savedCount}
-        untrackedCount={untrackedCount}
-        value={viewMode}
-        onChange={onViewModeChange}
+      <FilterMenu
+        activeMenu={activeMenu}
+        id="assetTypes"
+        label="種別"
+        onToggleMenu={toggleMenu}
+        options={assetTypeOptions}
+        selected={filters.assetTypes}
+        onToggle={(value: AssetType) =>
+          onFiltersChange({
+            ...filters,
+            assetTypes: toggleValue(filters.assetTypes, value),
+          })
+        }
       />
-      <div className="mt-5 grid gap-5 border-t border-[var(--color-border)] pt-5">
-        <ChipList
-          label="提供アセット"
-          options={assetTypeOptions}
-          selected={filters.assetTypes}
-          onToggle={onToggleAssetType}
-        />
-        <ChipList
-          label="対象フェーズ"
-          options={stageOptions}
-          selected={filters.stages}
-          onToggle={onToggleStage}
-        />
-        <ChipList
-          label="エクイティ"
-          options={equityOptions}
-          selected={filters.equities}
-          onToggle={onToggleEquity}
-        />
-        <ChipList
-          label="募集ステータス"
-          options={statusOptions}
-          selected={filters.statuses}
-          onToggle={onToggleStatus}
-        />
-      </div>
-    </aside>
-  );
-}
-
-function ViewTabs({
-  canTrack,
-  savedCount,
-  untrackedCount,
-  value,
-  onChange,
-}: {
-  canTrack: boolean;
-  savedCount: number;
-  untrackedCount: number;
-  value: ViewMode;
-  onChange: (mode: ViewMode) => void;
-}) {
-  const tabs = [
-    { label: "すべて", value: "all" as const },
-    { label: `保存済み ${savedCount}`, value: "saved" as const },
-    { label: `未整理 ${untrackedCount}`, value: "untracked" as const },
-  ];
-  return (
-    <div className="grid gap-1 rounded-md bg-[var(--color-surface-2)] p-1">
-      {tabs.map((tab) => (
-        <button
-          key={tab.value}
-          type="button"
-          disabled={!canTrack && tab.value !== "all"}
-          onClick={() => onChange(tab.value)}
-          className={`h-8 rounded px-3 text-xs font-medium transition-colors ${
-            value === tab.value
-              ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm"
-              : "text-[var(--color-muted)] hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-45"
-          }`}
-        >
-          {tab.label}
-        </button>
-      ))}
+      <FilterMenu
+        activeMenu={activeMenu}
+        id="stages"
+        label="フェーズ"
+        onToggleMenu={toggleMenu}
+        options={stageOptions}
+        selected={filters.stages}
+        onToggle={(value: Stage) =>
+          onFiltersChange({
+            ...filters,
+            stages: toggleValue(filters.stages, value),
+          })
+        }
+      />
+      <FilterMenu
+        activeMenu={activeMenu}
+        id="equities"
+        label="エクイティ"
+        onToggleMenu={toggleMenu}
+        options={equityOptions}
+        selected={filters.equities}
+        onToggle={(value: Equity) =>
+          onFiltersChange({
+            ...filters,
+            equities: toggleValue(filters.equities, value),
+          })
+        }
+      />
+      <FilterMenu
+        activeMenu={activeMenu}
+        align="right"
+        id="statuses"
+        label="募集状況"
+        onToggleMenu={toggleMenu}
+        options={statusOptions}
+        selected={filters.statuses}
+        onToggle={(value: ApplicationStatus) =>
+          onFiltersChange({
+            ...filters,
+            statuses: toggleValue(filters.statuses, value),
+          })
+        }
+      />
+      <FilterMenu
+        activeMenu={activeMenu}
+        align="right"
+        id="regions"
+        label="地域"
+        onToggleMenu={toggleMenu}
+        options={regionOptions}
+        selected={filters.regions}
+        onToggle={(value) =>
+          onFiltersChange({
+            ...filters,
+            regions: toggleValue(filters.regions, value),
+          })
+        }
+      />
     </div>
   );
 }
 
-function SearchRow({
+function ResultToolbar({
   assetCount,
-  query,
+  filters,
+  onClear,
   resultCount,
-  onQueryChange,
 }: {
   assetCount: number;
-  query: string;
+  filters: FilterState;
+  onClear: () => void;
   resultCount: number;
-  onQueryChange: (query: string) => void;
+}) {
+  const activeCount = getActiveCount(filters);
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-muted)]">
+      <span className="font-medium text-[var(--color-text)]">
+        {resultCount} / {assetCount} 件
+      </span>
+      <div className="flex items-center gap-3">
+        {activeCount > 0 && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="font-medium text-[var(--color-text)] underline decoration-dotted underline-offset-4"
+          >
+            条件をクリア
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SearchBox({
+  assetCount,
+  filters,
+  regionOptions,
+  resultCount,
+  onClear,
+  onFiltersChange,
+}: {
+  assetCount: number;
+  filters: FilterState;
+  regionOptions: ChipOption<string>[];
+  resultCount: number;
+  onClear: () => void;
+  onFiltersChange: (filters: FilterState) => void;
 }) {
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-      <div className="flex flex-col gap-3 sm:flex-row">
-      <label className="min-w-0 flex-1">
+    <section className="rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-2 shadow-xl shadow-black/[0.04]">
+      <label className="block">
         <span className="sr-only">キーワード検索</span>
         <input
-          value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
-          placeholder="キーワードで検索"
-          className="h-10 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-text)]"
+          autoFocus
+          value={filters.query}
+          onChange={(event) =>
+            onFiltersChange({ ...filters, query: event.target.value })
+          }
+          placeholder="支援を検索"
+          className="h-14 w-full rounded-2xl border-0 bg-transparent px-4 text-base text-[var(--color-text)] outline-none placeholder:text-[var(--color-muted)]"
         />
       </label>
-      <div className="flex h-10 items-center justify-between gap-3 rounded-md bg-[var(--color-surface-2)] px-3 text-sm sm:w-48">
-        <span className="text-[var(--color-muted)]">表示中</span>
-        <span className="font-semibold text-[var(--color-text)]">
-          {resultCount} / {assetCount}
-        </span>
+      <div className="grid gap-3 rounded-2xl bg-[var(--color-bg)] px-3 py-3">
+        <ResultToolbar
+          assetCount={assetCount}
+          filters={filters}
+          onClear={onClear}
+          resultCount={resultCount}
+        />
+        <FilterPanel
+          filters={filters}
+          regionOptions={regionOptions}
+          onFiltersChange={onFiltersChange}
+        />
       </div>
-      </div>
-    </div>
+    </section>
   );
 }
 
-function ResultSummary({
-  activeCount,
-  canTrack,
-  onClear,
-}: {
-  activeCount: number;
-  canTrack: boolean;
-  onClear: () => void;
-}) {
-  return (
-    <div className="flex flex-col gap-3 border-b border-[var(--color-border)] pb-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <p className="text-xs leading-relaxed text-[var(--color-muted)]">
-          日付は{LAST_CHECKED}時点の目安です。最新は各公式サイトをご確認ください。
-          {!canTrack && " ログインすると各アセットの進捗を保存できます。"}
-        </p>
-      </div>
-      {activeCount > 0 && (
-        <button
-          type="button"
-          onClick={onClear}
-          className="inline-flex h-8 w-fit items-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-medium text-[var(--color-muted)] transition-colors hover:border-[var(--color-text)]/25 hover:text-[var(--color-text)]"
-        >
-          条件をクリア（{activeCount}）
-        </button>
-      )}
-    </div>
-  );
-}
-
-function AssetGrid({
+function ResultList({
   canTrack,
   filtered,
   now,
@@ -411,7 +351,7 @@ function AssetGrid({
   if (filtered.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-16 text-center text-sm text-[var(--color-muted)]">
-        条件に合うアセットが見つかりませんでした。条件を緩めてお試しください。
+        見つかりませんでした。別のキーワードで検索してください。
       </div>
     );
   }
@@ -442,27 +382,24 @@ export function Directory({
   initialStates: UserAssetState[];
   user: PublicUser | null;
 }) {
-  const [filters, setFilters] = useState<FilterState>({
-    query: "",
-    assetTypes: [],
-    stages: [],
-    equities: [],
-    statuses: [],
-  });
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [filters, setFilters] = useState<FilterState>(() =>
+    filtersFromSearchParams(searchParams),
+  );
   const [stateByAssetId, setStateByAssetId] = useState<
     Record<string, UserAssetState>
   >(() => statesToRecord(initialStates));
-  const [viewMode, setViewMode] = useState<ViewMode>("all");
   const [savingAssetId, setSavingAssetId] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
-  const filtered = useMemo(
-    () => getVisibleAssets({ assets, filters, stateByAssetId, viewMode }),
-    [assets, filters, stateByAssetId, viewMode],
-  );
-  const activeCount = getActiveCount(filters);
-  const savedCount = Object.keys(stateByAssetId).length;
-  const untrackedCount = Math.max(assets.length - savedCount, 0);
   const [now, setNow] = useState<Date | undefined>(undefined);
+  const previousSearch = useRef(searchParams.toString());
+  const regionOptions = useMemo(() => getRegionOptions(assets), [assets]);
+  const filtered = useMemo(
+    () => getFilteredAssets(assets, filters),
+    [assets, filters],
+  );
 
   useEffect(() => setNow(new Date()), []);
   useEffect(
@@ -470,134 +407,50 @@ export function Directory({
     [initialStates, user?.id],
   );
   useEffect(() => {
-    if (!user) setViewMode("all");
-  }, [user]);
+    const current = searchParams.toString();
+    if (current === previousSearch.current) return;
+    previousSearch.current = current;
+    setFilters(filtersFromSearchParams(searchParams));
+  }, [searchParams]);
+  useEffect(() => {
+    const nextSearch = filtersToSearchParams(filters).toString();
+    if (nextSearch === previousSearch.current) return;
+    previousSearch.current = nextSearch;
+    const next = nextSearch ? `${pathname}?${nextSearch}` : pathname;
+    router.replace(next, { scroll: false });
+  }, [filters, pathname, router]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
-      <section className="min-w-0 space-y-5 lg:order-2">
-        <SearchRow
-          assetCount={assets.length}
-          query={filters.query}
-          resultCount={filtered.length}
-          onQueryChange={(query) =>
-            setFilters((state) => ({ ...state, query }))
-          }
-        />
-        <div className="lg:hidden">
-          <details className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
-            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium text-[var(--color-text)]">
-              Filters
-              <span className="text-xs font-normal text-[var(--color-muted)]">
-                {activeCount} active
-              </span>
-            </summary>
-            <div className="border-t border-[var(--color-border)] p-4">
-              <FilterPanel
-                canTrack={Boolean(user)}
-                embedded
-                filters={filters}
-                savedCount={savedCount}
-                untrackedCount={untrackedCount}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                onToggleAssetType={(value) =>
-                  setFilters((state) => ({
-                    ...state,
-                    assetTypes: toggleValue(state.assetTypes, value),
-                  }))
-                }
-                onToggleStage={(value) =>
-                  setFilters((state) => ({
-                    ...state,
-                    stages: toggleValue(state.stages, value),
-                  }))
-                }
-                onToggleEquity={(value) =>
-                  setFilters((state) => ({
-                    ...state,
-                    equities: toggleValue(state.equities, value),
-                  }))
-                }
-                onToggleStatus={(value) =>
-                  setFilters((state) => ({
-                    ...state,
-                    statuses: toggleValue(state.statuses, value),
-                  }))
-                }
-              />
-            </div>
-          </details>
+    <div className="mx-auto grid max-w-4xl gap-4">
+      <SearchBox
+        assetCount={assets.length}
+        filters={filters}
+        regionOptions={regionOptions}
+        resultCount={filtered.length}
+        onClear={() => setFilters(createEmptyFilters())}
+        onFiltersChange={setFilters}
+      />
+      {error && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
         </div>
-        <ResultSummary
-          activeCount={activeCount}
-          canTrack={Boolean(user)}
-          onClear={() =>
-            setFilters({
-              query: "",
-              assetTypes: [],
-              stages: [],
-              equities: [],
-              statuses: [],
-            })
-          }
-        />
-        {error && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {error}
-          </div>
-        )}
-        <AssetGrid
-          canTrack={Boolean(user)}
-          filtered={filtered}
-          now={now}
-          onUserStatusChange={(assetId, status) =>
-            saveUserStatus({
-              assetId,
-              setError,
-              setSavingAssetId,
-              setStateByAssetId,
-              status,
-            })
-          }
-          savingAssetId={savingAssetId}
-          stateByAssetId={stateByAssetId}
-        />
-      </section>
-      <div className="hidden lg:order-1 lg:block lg:sticky lg:top-6 lg:self-start">
-        <FilterPanel
-          canTrack={Boolean(user)}
-          filters={filters}
-          savedCount={savedCount}
-          untrackedCount={untrackedCount}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onToggleAssetType={(value) =>
-            setFilters((state) => ({
-              ...state,
-              assetTypes: toggleValue(state.assetTypes, value),
-            }))
-          }
-          onToggleStage={(value) =>
-            setFilters((state) => ({
-              ...state,
-              stages: toggleValue(state.stages, value),
-            }))
-          }
-          onToggleEquity={(value) =>
-            setFilters((state) => ({
-              ...state,
-              equities: toggleValue(state.equities, value),
-            }))
-          }
-          onToggleStatus={(value) =>
-            setFilters((state) => ({
-              ...state,
-              statuses: toggleValue(state.statuses, value),
-            }))
-          }
-        />
-      </div>
+      )}
+      <ResultList
+        canTrack={Boolean(user)}
+        filtered={filtered}
+        now={now}
+        onUserStatusChange={(assetId, status) =>
+          saveUserStatus({
+            assetId,
+            setError,
+            setSavingAssetId,
+            setStateByAssetId,
+            status,
+          })
+        }
+        savingAssetId={savingAssetId}
+        stateByAssetId={stateByAssetId}
+      />
     </div>
   );
 }
@@ -639,8 +492,11 @@ async function saveUserStatus({
   }
   setStateByAssetId((current) => {
     if (body.state?.status === "not_started") {
-      const { [assetId]: _removed, ...rest } = current;
-      return rest;
+      return Object.fromEntries(
+        Object.entries(current).filter(([currentAssetId]) => {
+          return currentAssetId !== assetId;
+        }),
+      );
     }
     return { ...current, [assetId]: body.state as UserAssetState };
   });

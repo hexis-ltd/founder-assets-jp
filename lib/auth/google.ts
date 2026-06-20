@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 
 export const GOOGLE_OAUTH_STATE_COOKIE = "founder_assets_google_oauth_state";
 export const GOOGLE_OAUTH_STATE_MAX_AGE_SECONDS = 60 * 10;
