@@ -1,0 +1,29 @@
+{
+  "pkg": "founder-assets-jp",
+  "globalName": "FounderAssetsJp",
+  "shape": "package",
+  "srcDir": "components",
+  "tsconfig": "tsconfig.json",
+  "buildCmd": "node .ds-sync/node_modules/@tailwindcss/cli/dist/index.mjs -i ./app/globals.css -o ./.design-sync/compiled.css",
+  "cssEntry": ".design-sync/compiled.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "guidelinesGlob": ["docs/_design-guidelines/**/*.md"],
+  "componentSrcMap": {
+    "AssetCard": "components/AssetCard.tsx",
+    "AuthForm": "components/AuthForm.tsx",
+    "AuthPanel": "components/AuthPanel.tsx",
+    "Directory": "components/Directory.tsx"
+  },
+  "dtsPropsFor": {
+    "AssetCard": "  /** 表示する支援アセット */\n  asset: { id: string; name: string; nameEn?: string; operator: string; region?: string; assetTypes: (\"free-office\" | \"cloud-credit\" | \"funding\" | \"equity-investment\" | \"grant-subsidy\" | \"mentoring\" | \"talent-program\" | \"community\" | \"overseas\" | \"accelerator\")[]; stages: (\"idea\" | \"seed\" | \"early\" | \"growth\" | \"any\")[]; equity: \"none\" | \"optional\" | \"required\"; application: { status: \"open\" | \"upcoming\" | \"rolling\" | \"recurring\" | \"closed\"; deadline?: string; opensAt?: string; window?: string; note?: string }; value?: string; eligibility?: string; summary: string; url: string; tags?: string[] };\n  /** 進捗トラッキングUI（保存セレクト）を表示するか。false ならサインイン誘導リンクになる */\n  canTrack: boolean;\n  /** 現在時刻。締切までの残日数表示に使う（クライアントのマウント後に渡す） */\n  now?: Date;\n  /** 進捗ステータス変更時のコールバック */\n  onUserStatusChange: (assetId: string, status: \"not_started\" | \"interested\" | \"planned\" | \"applied\" | \"accepted\" | \"rejected\" | \"skipped\") => void;\n  /** 保存処理中はセレクトを無効化する */\n  saving: boolean;\n  /** ユーザーごとの保存済み進捗状態 */\n  userState?: { assetId: string; status: \"not_started\" | \"interested\" | \"planned\" | \"applied\" | \"accepted\" | \"rejected\" | \"skipped\"; updatedAt: string };",
+    "Directory": "  /** 一覧表示する支援アセットの配列（締切順などで並ぶ） */\n  assets: { id: string; name: string; nameEn?: string; operator: string; region?: string; assetTypes: string[]; stages: string[]; equity: \"none\" | \"optional\" | \"required\"; application: { status: \"open\" | \"upcoming\" | \"rolling\" | \"recurring\" | \"closed\"; deadline?: string; opensAt?: string; window?: string; note?: string }; value?: string; eligibility?: string; summary: string; url: string; tags?: string[] }[];\n  /** ユーザーごとの保存済み進捗の初期値 */\n  initialStates: { assetId: string; status: \"not_started\" | \"interested\" | \"planned\" | \"applied\" | \"accepted\" | \"rejected\" | \"skipped\"; updatedAt: string }[];\n  /** ログイン中ユーザー（未ログインは null）。進捗保存UIの可否を切り替える */\n  user: { id: string; email: string } | null;",
+    "AuthForm": "  /** 初期エラーメッセージ（OAuthコールバック失敗時などに表示） */\n  initialErrorMessage?: string;\n  /** サインイン画面かサインアップ画面か */\n  mode: \"signin\" | \"signup\";",
+    "AuthPanel": "  /** ログイン中ユーザー。null のときはサインインリンクを表示する */\n  user: { id: string; email: string } | null;"
+  },
+  "extraEntries": ["./.design-sync/ds-process-shim.ts", "./.design-sync/ds-provider.tsx"],
+  "provider": { "component": "DesignProvider" },
+  "runtimeFontPrefixes": ["Hiragino", "Noto Sans JP", "Yu Gothic", "Segoe UI", "Roboto"],
+  "overrides": {
+    "Directory": { "cardMode": "single", "primaryStory": "Default", "viewport": "1180x920" }
+  }
+}
